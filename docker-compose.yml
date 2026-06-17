@@ -65,6 +65,17 @@ services:
       logstash:
         condition: service_started
 
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    depends_on:
+      - fraud-app
+    volumes:
+      - ./frontend/src:/app/src
+
 volumes:
   es-data:
   app-logs:
