@@ -1,6 +1,6 @@
-package com.example.fraud.search;
+package com.example.fraud.event;
 
-import com.example.fraud.event.EventDocument;
+import com.example.fraud.search.SearchResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;

@@ -1,4 +1,4 @@
-package com.example.fraud.search;
+package com.example.fraud.fraud;
 
 import java.time.Instant;
 

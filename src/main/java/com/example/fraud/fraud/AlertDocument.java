@@ -1,4 +1,4 @@
-package com.example.fraud.search;
+package com.example.fraud.fraud;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;

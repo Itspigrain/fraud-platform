@@ -1,6 +1,15 @@
-package com.example.fraud.search;
+package com.example.fraud.api;
 
 import com.example.fraud.event.EventDocument;
+import com.example.fraud.event.EventSearchRequest;
+import com.example.fraud.event.EventSearchService;
+import com.example.fraud.fraud.AlertDocument;
+import com.example.fraud.fraud.AlertSearchRequest;
+import com.example.fraud.fraud.AlertSearchService;
+import com.example.fraud.search.AggregationService;
+import com.example.fraud.search.PageInfo;
+import com.example.fraud.search.SearchResponse;
+import com.example.fraud.search.StatsResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.server.ResponseStatusException;
 

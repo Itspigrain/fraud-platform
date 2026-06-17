@@ -5,6 +5,9 @@ import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.aggregations.Buckets;
 import com.example.fraud.event.EventDocument;
+import com.example.fraud.event.EventSearchRequest;
+import com.example.fraud.fraud.AlertDocument;
+import com.example.fraud.fraud.AlertSearchRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;

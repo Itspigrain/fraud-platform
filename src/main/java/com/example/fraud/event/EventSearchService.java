@@ -1,6 +1,7 @@
-package com.example.fraud.search;
+package com.example.fraud.event;
 
-import com.example.fraud.event.EventDocument;
+import com.example.fraud.search.PageInfo;
+import com.example.fraud.search.SearchResponse;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import org.springframework.data.domain.PageRequest;
