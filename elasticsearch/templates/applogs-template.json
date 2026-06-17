@@ -1,0 +1,19 @@
+{
+  "index_patterns": ["application-logs-*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    },
+    "mappings": {
+      "properties": {
+        "@timestamp":   { "type": "date" },
+        "level":        { "type": "keyword" },
+        "logger_name":  { "type": "keyword" },
+        "message":      { "type": "text" },
+        "thread_name":  { "type": "keyword" },
+        "stack_trace":  { "type": "text" }
+      }
+    }
+  }
+}

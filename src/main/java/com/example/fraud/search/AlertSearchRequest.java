@@ -1,0 +1,27 @@
+package com.example.fraud.search;
+
+import java.time.Instant;
+
+public record AlertSearchRequest(
+    String q,
+    String customerId,
+    String ruleId,
+    String severity,
+    String eventId,
+    Integer riskScoreMin,
+    Integer riskScoreMax,
+    Instant from,
+    Instant to,
+    int page,
+    int size,
+    String sort,
+    String direction
+) {
+    public AlertSearchRequest {
+        if (page < 0) page = 0;
+        if (size < 1) size = 1;
+        if (size > 100) size = 100;
+        if (sort == null || sort.isBlank()) sort = "detectedAt";
+        if (direction == null || direction.isBlank()) direction = "desc";
+    }
+}

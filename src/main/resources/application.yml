@@ -1,0 +1,23 @@
+spring:
+  elasticsearch:
+    uris: ${SPRING_ELASTICSEARCH_URIS:http://localhost:9200}
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: 8080
+
+fraud:
+  pipeline:
+    log-dir: ${FRAUD_LOG_DIR:logs}
+  geoip:
+    database-path: ${GEOIP_DB_PATH:}
+  rules:
+    suspicious-ip:
+      blocked-ips:
+        - 10.0.0.1
+      high-risk-countries:
+        - North Korea
+        - Iran
+        - Syria

@@ -1,0 +1,24 @@
+{
+  "index_patterns": ["alerts-*"],
+  "template": {
+    "aliases": {
+      "alerts": {}
+    },
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    },
+    "mappings": {
+      "properties": {
+        "alertId":      { "type": "keyword" },
+        "eventId":      { "type": "keyword" },
+        "customerId":   { "type": "keyword" },
+        "ruleId":       { "type": "keyword" },
+        "severity":     { "type": "keyword" },
+        "riskScore":    { "type": "integer" },
+        "reason":       { "type": "text" },
+        "detectedAt":   { "type": "date" }
+      }
+    }
+  }
+}

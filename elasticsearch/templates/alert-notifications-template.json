@@ -1,0 +1,18 @@
+{
+  "index_patterns": ["alert-notifications*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    },
+    "mappings": {
+      "properties": {
+        "rule_name":    { "type": "keyword" },
+        "severity":     { "type": "keyword" },
+        "message":      { "type": "text" },
+        "conditions":   { "type": "text" },
+        "match_count":  { "type": "integer" }
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "index_patterns": ["audit-*"],
+  "template": {
+    "aliases": {
+      "audit": {}
+    },
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    },
+    "mappings": {
+      "properties": {
+        "auditId":            { "type": "keyword" },
+        "eventId":            { "type": "keyword" },
+        "customerId":         { "type": "keyword" },
+        "rulesEvaluated":     { "type": "keyword" },
+        "rulesFired":         { "type": "keyword" },
+        "compositeRiskScore": { "type": "integer" },
+        "decision":           { "type": "keyword" },
+        "evaluatedAt":        { "type": "date" }
+      }
+    }
+  }
+}

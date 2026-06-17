@@ -1,0 +1,35 @@
+{
+  "index_patterns": ["events-*"],
+  "template": {
+    "aliases": {
+      "events": {}
+    },
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    },
+    "mappings": {
+      "properties": {
+        "id":           { "type": "keyword" },
+        "tenantId":     { "type": "keyword" },
+        "eventType":    { "type": "keyword" },
+        "customerId":   { "type": "keyword" },
+        "sourceIp":     { "type": "ip" },
+        "deviceId":     { "type": "keyword" },
+        "email":        { "type": "keyword" },
+        "phoneNumber":  { "type": "keyword" },
+        "eventTime":    { "type": "date" },
+        "riskScore":    { "type": "integer" },
+        "attributes":   { "type": "object", "dynamic": true },
+        "geoip": {
+          "properties": {
+            "country_name": { "type": "keyword" },
+            "city_name":    { "type": "keyword" },
+            "region_name":  { "type": "keyword" },
+            "location":     { "type": "geo_point" }
+          }
+        }
+      }
+    }
+  }
+}
