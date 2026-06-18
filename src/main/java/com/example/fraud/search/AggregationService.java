@@ -7,6 +7,7 @@ import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventSearchRequest;
 import com.example.fraud.fraud.AlertDocument;
 import com.example.fraud.fraud.AlertSearchRequest;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
@@ -27,6 +28,7 @@ public class AggregationService {
         this.operations = operations;
     }
 
+    @Cacheable(value = "eventStats", key = "#request.toString()")
     public StatsResponse eventStats(EventSearchRequest request) {
         var boolQuery = buildEventFilters(request);
 
@@ -46,6 +48,7 @@ public class AggregationService {
         return new StatsResponse(parseAggregations(hits.getAggregations()));
     }
 
+    @Cacheable(value = "alertStats", key = "#request.toString()")
     public StatsResponse alertStats(AlertSearchRequest request) {
         var boolQuery = buildAlertFilters(request);
 

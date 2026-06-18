@@ -49,6 +49,18 @@ services:
       elasticsearch:
         condition: service_healthy
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   fraud-app:
     build: .
     ports:
@@ -57,10 +69,13 @@ services:
       - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
       - FRAUD_LOG_DIR=/logs
       - GEOIP_DB_PATH=${GEOIP_DB_PATH:-}
+      - REDIS_HOST=redis
     volumes:
       - app-logs:/logs
     depends_on:
       elasticsearch:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       logstash:
         condition: service_started
@@ -79,3 +94,4 @@ services:
 volumes:
   es-data:
   app-logs:
+  redis-data:
