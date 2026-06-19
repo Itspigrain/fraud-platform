@@ -3,6 +3,7 @@ package com.example.fraud.tenant;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -20,6 +21,7 @@ public class TenantFilter implements Filter {
     private final String superTenantValue;
     private final List<String> excludedPaths;
 
+    @Autowired
     public TenantFilter(TenantProperties properties) {
         this(properties.headerName(), properties.superTenantValue(), properties.excludedPaths());
     }
