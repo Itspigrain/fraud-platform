@@ -35,7 +35,6 @@ public class SearchController {
     @GetMapping("/events")
     public SearchResponse<EventDocument> searchEvents(
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) String tenantId,
             @RequestParam(required = false) String customerId,
             @RequestParam(required = false) String eventType,
             @RequestParam(required = false) String sourceIp,
@@ -54,7 +53,7 @@ public class SearchController {
         validateSortField(sort, "id", "tenantId", "customerId", "eventType",
             "sourceIp", "deviceId", "email", "riskScore", "eventTime");
 
-        var request = new EventSearchRequest(q, tenantId, customerId, eventType,
+        var request = new EventSearchRequest(q, customerId, eventType,
             sourceIp, deviceId, email, riskScoreMin, riskScoreMax,
             parseInstant(from, "from"), parseInstant(to, "to"),
             page, size, sort, direction);
@@ -93,7 +92,6 @@ public class SearchController {
     @GetMapping("/events/stats")
     public StatsResponse eventStats(
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) String tenantId,
             @RequestParam(required = false) String customerId,
             @RequestParam(required = false) String eventType,
             @RequestParam(required = false) String sourceIp,
@@ -108,7 +106,7 @@ public class SearchController {
             @RequestParam(defaultValue = "eventTime") String sort,
             @RequestParam(defaultValue = "desc") String direction) {
 
-        var request = new EventSearchRequest(q, tenantId, customerId, eventType,
+        var request = new EventSearchRequest(q, customerId, eventType,
             sourceIp, deviceId, email, riskScoreMin, riskScoreMax,
             parseInstant(from, "from"), parseInstant(to, "to"),
             page, size, sort, direction);

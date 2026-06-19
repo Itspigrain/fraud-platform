@@ -4,7 +4,6 @@ import java.time.Instant;
 
 public record EventSearchRequest(
     String q,
-    String tenantId,
     String customerId,
     String eventType,
     String sourceIp,

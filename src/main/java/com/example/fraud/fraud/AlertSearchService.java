@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import com.example.fraud.tenant.TenantContext;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,6 +26,9 @@ public class AlertSearchService {
                 b.must(Query.of(q -> q.multiMatch(m -> m
                     .query(request.q())
                     .fields("reason", "customerId", "ruleId"))));
+            }
+            if (!TenantContext.isSuperTenant()) {
+                addTermFilter(b, "tenantId", TenantContext.getTenantId());
             }
             addTermFilter(b, "customerId", request.customerId());
             addTermFilter(b, "ruleId", request.ruleId());

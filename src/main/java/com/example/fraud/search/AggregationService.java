@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import com.example.fraud.tenant.TenantContext;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -70,7 +71,9 @@ public class AggregationService {
 
     private BoolQuery buildEventFilters(EventSearchRequest request) {
         return BoolQuery.of(b -> {
-            addTermFilter(b, "tenantId", request.tenantId());
+            if (!TenantContext.isSuperTenant()) {
+                addTermFilter(b, "tenantId", TenantContext.getTenantId());
+            }
             addTermFilter(b, "customerId", request.customerId());
             addTermFilter(b, "eventType", request.eventType());
             addTermFilter(b, "sourceIp", request.sourceIp());
@@ -84,6 +87,9 @@ public class AggregationService {
 
     private BoolQuery buildAlertFilters(AlertSearchRequest request) {
         return BoolQuery.of(b -> {
+            if (!TenantContext.isSuperTenant()) {
+                addTermFilter(b, "tenantId", TenantContext.getTenantId());
+            }
             addTermFilter(b, "customerId", request.customerId());
             addTermFilter(b, "ruleId", request.ruleId());
             addTermFilter(b, "severity", request.severity());

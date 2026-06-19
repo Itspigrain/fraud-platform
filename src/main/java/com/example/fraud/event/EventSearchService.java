@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import com.example.fraud.tenant.TenantContext;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,7 +27,9 @@ public class EventSearchService {
                     .query(request.q())
                     .fields("customerId", "email", "deviceId", "sourceIp", "eventType"))));
             }
-            addTermFilter(b, "tenantId", request.tenantId());
+            if (!TenantContext.isSuperTenant()) {
+                addTermFilter(b, "tenantId", TenantContext.getTenantId());
+            }
             addTermFilter(b, "customerId", request.customerId());
             addTermFilter(b, "eventType", request.eventType());
             addTermFilter(b, "sourceIp", request.sourceIp());

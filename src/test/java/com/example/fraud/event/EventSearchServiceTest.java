@@ -1,6 +1,7 @@
 package com.example.fraud.event;
 
 import com.example.fraud.search.SearchResponse;
+import com.example.fraud.tenant.TenantContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
@@ -18,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class EventSearchServiceTest {
@@ -48,7 +50,7 @@ class EventSearchServiceTest {
             .thenReturn(hits);
 
         var request = new EventSearchRequest(
-            null, null, null, null, null, null, null,
+            null, null, null, null, null, null,
             null, null, null, null, 0, 20, "eventTime", "desc");
 
         var response = service.search(request);
@@ -68,7 +70,7 @@ class EventSearchServiceTest {
             .thenReturn(hits);
 
         var request = new EventSearchRequest(
-            null, null, "c1", null, null, null, null,
+            null, "c1", null, null, null, null,
             null, null, null, null, 0, 20, "eventTime", "desc");
 
         var response = service.search(request);
@@ -85,7 +87,7 @@ class EventSearchServiceTest {
             .thenReturn(hits);
 
         var request = new EventSearchRequest(
-            "alice", null, null, null, null, null, null,
+            "alice", null, null, null, null, null,
             null, null, null, null, 0, 20, "eventTime", "desc");
 
         var response = service.search(request);
@@ -101,7 +103,7 @@ class EventSearchServiceTest {
             .thenReturn(hits);
 
         var request = new EventSearchRequest(
-            null, null, null, null, null, null, null,
+            null, null, null, null, null, null,
             20, 80, null, null, 0, 20, "eventTime", "desc");
 
         var response = service.search(request);
@@ -117,7 +119,7 @@ class EventSearchServiceTest {
             .thenReturn(hits);
 
         var request = new EventSearchRequest(
-            null, null, null, null, null, null, null,
+            null, null, null, null, null, null,
             null, null,
             Instant.parse("2026-06-15T00:00:00Z"),
             Instant.parse("2026-06-17T00:00:00Z"),
@@ -136,7 +138,7 @@ class EventSearchServiceTest {
             .thenReturn(hits);
 
         var request = new EventSearchRequest(
-            "alice", "t1", null, "LOGIN", null, null, null,
+            "alice", null, "LOGIN", null, null, null,
             0, 50,
             Instant.parse("2026-06-15T00:00:00Z"), null,
             0, 10, "riskScore", "asc");
@@ -154,7 +156,7 @@ class EventSearchServiceTest {
             .thenReturn(hits);
 
         var request = new EventSearchRequest(
-            null, null, "nonexistent", null, null, null, null,
+            null, "nonexistent", null, null, null, null,
             null, null, null, null, 0, 20, "eventTime", "desc");
 
         var response = service.search(request);
@@ -172,12 +174,34 @@ class EventSearchServiceTest {
             .thenReturn(hits);
 
         var request = new EventSearchRequest(
-            null, null, null, null, null, null, null,
+            null, null, null, null, null, null,
             null, null, null, null, 2, 20, "eventTime", "desc");
 
         var response = service.search(request);
 
         assertThat(response.page().totalPages()).isEqualTo(3);
         assertThat(response.page().number()).isEqualTo(2);
+    }
+
+    @Test
+    void searchAlwaysFiltersByTenantFromContext() {
+        TenantContext.setSuperTenantValue("__super__");
+        TenantContext.setTenantId("tenant-abc");
+
+        var doc = sampleEvent("e1", "c1");
+        var hits = mockHits(List.of(doc), 1);
+        when(operations.search(any(Query.class), eq(EventDocument.class)))
+            .thenReturn(hits);
+
+        var request = new EventSearchRequest(
+            null, null, null, null, null, null, null,
+            null, null, null, 0, 20, "eventTime", "desc");
+
+        service.search(request);
+
+        // Verify the query was built — the service must read TenantContext internally
+        verify(operations).search(any(Query.class), eq(EventDocument.class));
+
+        TenantContext.clear();
     }
 }

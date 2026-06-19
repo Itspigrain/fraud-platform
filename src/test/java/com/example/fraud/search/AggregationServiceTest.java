@@ -50,7 +50,7 @@ class AggregationServiceTest {
         when(operations.search(any(Query.class), eq(EventDocument.class))).thenReturn(searchHits);
 
         var request = new EventSearchRequest(
-            null, null, null, null, null, null, null,
+            null, null, null, null, null, null,
             null, null, null, null, 0, 20, "eventTime", "desc");
 
         var response = service.eventStats(request);
@@ -109,7 +109,7 @@ class AggregationServiceTest {
         when(operations.search(any(Query.class), eq(EventDocument.class))).thenReturn(searchHits);
 
         var request = new EventSearchRequest(
-            null, "t1", "c1", null, null, null, null,
+            null, "c1", null, null, null, null,
             null, null, null, null, 0, 20, "eventTime", "desc");
 
         var response = service.eventStats(request);

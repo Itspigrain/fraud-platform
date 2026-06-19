@@ -40,7 +40,7 @@ class SearchControllerTest {
         when(eventSearchService.search(any(EventSearchRequest.class))).thenReturn(expected);
 
         var response = controller.searchEvents(
-            null, null, null, null, null, null, null,
+            null, null, null, null, null, null,
             null, null, null, null, 0, 20, "eventTime", "desc");
 
         assertThat(response.results()).hasSize(1);
@@ -69,7 +69,7 @@ class SearchControllerTest {
         when(aggregationService.eventStats(any(EventSearchRequest.class))).thenReturn(expected);
 
         var response = controller.eventStats(
-            null, null, null, null, null, null, null,
+            null, null, null, null, null, null,
             null, null, null, null, 0, 20, "eventTime", "desc");
 
         assertThat(response.aggregations()).containsKey("eventCountByType");
@@ -92,21 +92,21 @@ class SearchControllerTest {
     @Test
     void searchEventsWithInvalidDateReturns400() {
         assertThrows(ResponseStatusException.class, () ->
-            controller.searchEvents(null, null, null, null, null, null, null,
+            controller.searchEvents(null, null, null, null, null, null,
                 null, null, "not-a-date", null, 0, 20, "eventTime", "desc"));
     }
 
     @Test
     void searchEventsWithInvalidSortFieldReturns400() {
         assertThrows(ResponseStatusException.class, () ->
-            controller.searchEvents(null, null, null, null, null, null, null,
+            controller.searchEvents(null, null, null, null, null, null,
                 null, null, null, null, 0, 20, "invalidField", "desc"));
     }
 
     @Test
     void searchEventsWithRiskScoreOutOfRangeReturns400() {
         assertThrows(ResponseStatusException.class, () ->
-            controller.searchEvents(null, null, null, null, null, null, null,
+            controller.searchEvents(null, null, null, null, null, null,
                 150, null, null, null, 0, 20, "eventTime", "desc"));
     }
 }
