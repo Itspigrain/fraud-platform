@@ -37,15 +37,6 @@ export function EventsFilter({ filters, onChange, onSearch, onReset }: EventsFil
         />
       </div>
       <div>
-        <label className="text-xs text-slate-500">Tenant</label>
-        <Input
-          placeholder="tenant-1"
-          value={filters.tenantId ?? ''}
-          onChange={(e) => update('tenantId', e.target.value)}
-          className="w-32"
-        />
-      </div>
-      <div>
         <label className="text-xs text-slate-500">Risk Min</label>
         <Input
           type="number"

@@ -11,6 +11,7 @@ import type {
 } from './types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const TENANT_ID = import.meta.env.VITE_TENANT_ID || 'default';
 
 function buildQuery(params: Record<string, unknown>): string {
   const searchParams = new URLSearchParams();
@@ -25,7 +26,11 @@ function buildQuery(params: Record<string, unknown>): string {
 async function fetchJson<T>(path: string, params: Record<string, unknown> = {}): Promise<T> {
   const query = buildQuery(params);
   const url = `${API_BASE}${path}${query ? `?${query}` : ''}`;
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: {
+      'X-Tenant-Id': TENANT_ID,
+    },
+  });
   if (!res.ok) {
     throw new Error(`API error: ${res.status} ${res.statusText}`);
   }

@@ -61,7 +61,6 @@ export interface AlertStatsResponse {
 export interface EventSearchParams {
   customerId?: string;
   eventType?: string;
-  tenantId?: string;
   sourceIp?: string;
   riskScoreMin?: number;
   riskScoreMax?: number;
