@@ -7,6 +7,7 @@ import java.time.Instant;
 @Document(indexName = "alerts", createIndex = false)
 public record AlertDocument(
     @Id String alertId,
+    String tenantId,
     String eventId,
     String customerId,
     String ruleId,

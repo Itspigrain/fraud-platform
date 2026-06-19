@@ -4,6 +4,7 @@ import java.time.Instant;
 
 public record FraudAlert(
     String alertId,
+    String tenantId,
     String eventId,
     String customerId,
     String ruleId,

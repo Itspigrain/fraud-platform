@@ -5,6 +5,7 @@ import java.util.List;
 
 public record AuditEntry(
     String auditId,
+    String tenantId,
     String eventId,
     String customerId,
     List<String> rulesEvaluated,

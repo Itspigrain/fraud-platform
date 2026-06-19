@@ -11,6 +11,7 @@
     "mappings": {
       "properties": {
         "auditId":            { "type": "keyword" },
+        "tenantId":           { "type": "keyword" },
         "eventId":            { "type": "keyword" },
         "customerId":         { "type": "keyword" },
         "rulesEvaluated":     { "type": "keyword" },
