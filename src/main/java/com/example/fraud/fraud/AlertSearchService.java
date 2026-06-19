@@ -4,6 +4,7 @@ import com.example.fraud.search.PageInfo;
 import com.example.fraud.search.SearchResponse;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
@@ -12,13 +13,10 @@ import com.example.fraud.tenant.TenantContext;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class AlertSearchService {
 
     private final ElasticsearchOperations operations;
-
-    public AlertSearchService(ElasticsearchOperations operations) {
-        this.operations = operations;
-    }
 
     public SearchResponse<AlertDocument> search(AlertSearchRequest request) {
         var boolQuery = BoolQuery.of(b -> {

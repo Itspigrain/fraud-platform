@@ -7,6 +7,7 @@ import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventSearchRequest;
 import com.example.fraud.fraud.AlertDocument;
 import com.example.fraud.fraud.AlertSearchRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
@@ -21,13 +22,10 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class AggregationService {
 
     private final ElasticsearchOperations operations;
-
-    public AggregationService(ElasticsearchOperations operations) {
-        this.operations = operations;
-    }
 
     @Cacheable(value = "eventStats", key = "#request.toString()")
     public StatsResponse eventStats(EventSearchRequest request) {

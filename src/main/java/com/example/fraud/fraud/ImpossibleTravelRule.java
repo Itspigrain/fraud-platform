@@ -3,6 +3,7 @@ package com.example.fraud.fraud;
 import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRepository;
 import com.example.fraud.geo.GeoIpService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -11,17 +12,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
+@RequiredArgsConstructor
 public class ImpossibleTravelRule implements FraudRule {
 
     private static final Duration MAX_TRAVEL_TIME = Duration.ofHours(2);
 
     private final EventRepository eventRepository;
     private final GeoIpService geoIpService;
-
-    public ImpossibleTravelRule(EventRepository eventRepository, GeoIpService geoIpService) {
-        this.eventRepository = eventRepository;
-        this.geoIpService = geoIpService;
-    }
 
     @Override
     public String ruleId() {

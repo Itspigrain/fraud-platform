@@ -1,8 +1,7 @@
 package com.example.fraud.geo;
 
 import com.maxmind.geoip2.DatabaseReader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -14,10 +13,10 @@ import java.io.File;
 import java.net.InetAddress;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class GeoIpService {
 
-    private static final Logger log = LoggerFactory.getLogger(GeoIpService.class);
     private final DatabaseReader reader;
 
     public GeoIpService(@Autowired(required = false) @Nullable DatabaseReader reader) {
@@ -35,9 +34,9 @@ public class GeoIpService {
         }
     }
 
+    @Slf4j
     @Configuration
     static class GeoIpConfig {
-        private static final Logger log = LoggerFactory.getLogger(GeoIpConfig.class);
 
         @Bean
         DatabaseReader geoIpDatabaseReader(

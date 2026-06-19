@@ -2,6 +2,7 @@ package com.example.fraud.fraud;
 
 import com.example.fraud.audit.AuditEntry;
 import com.example.fraud.event.EventDocument;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -10,15 +11,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class FraudEngine {
 
     private final List<FraudRule> rules;
     private final RiskScoreCalculator riskScoreCalculator;
-
-    public FraudEngine(List<FraudRule> rules, RiskScoreCalculator riskScoreCalculator) {
-        this.rules = rules;
-        this.riskScoreCalculator = riskScoreCalculator;
-    }
 
     public EvaluationResult evaluate(EventDocument event) {
         List<String> rulesEvaluated = rules.stream()

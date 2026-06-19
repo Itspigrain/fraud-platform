@@ -5,8 +5,8 @@ import com.example.fraud.event.EventRequest;
 import com.example.fraud.fraud.FraudEngine;
 import com.example.fraud.pipeline.LogstashEventPublisher;
 import com.example.fraud.tenant.TenantContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,19 +14,14 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Instant;
 import java.util.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/events")
+@RequiredArgsConstructor
 public class EventController {
-
-    private static final Logger log = LoggerFactory.getLogger(EventController.class);
 
     private final FraudEngine fraudEngine;
     private final LogstashEventPublisher publisher;
-
-    public EventController(FraudEngine fraudEngine, LogstashEventPublisher publisher) {
-        this.fraudEngine = fraudEngine;
-        this.publisher = publisher;
-    }
 
     @PostMapping
     public Map<String, Object> ingest(@RequestBody EventRequest request) {

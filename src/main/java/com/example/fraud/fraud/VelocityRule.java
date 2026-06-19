@@ -2,6 +2,7 @@ package com.example.fraud.fraud;
 
 import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -11,13 +12,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
+@RequiredArgsConstructor
 public class VelocityRule implements FraudRule {
 
     private final EventRepository eventRepository;
-
-    public VelocityRule(EventRepository eventRepository) {
-        this.eventRepository = eventRepository;
-    }
 
     @Override
     public String ruleId() {

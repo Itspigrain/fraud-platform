@@ -9,6 +9,7 @@ import com.example.fraud.fraud.AlertSearchService;
 import com.example.fraud.search.AggregationService;
 import com.example.fraud.search.SearchResponse;
 import com.example.fraud.search.StatsResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -18,19 +19,12 @@ import java.time.format.DateTimeParseException;
 
 @RestController
 @RequestMapping("/search")
+@RequiredArgsConstructor
 public class SearchController {
 
     private final EventSearchService eventSearchService;
     private final AlertSearchService alertSearchService;
     private final AggregationService aggregationService;
-
-    public SearchController(EventSearchService eventSearchService,
-                            AlertSearchService alertSearchService,
-                            AggregationService aggregationService) {
-        this.eventSearchService = eventSearchService;
-        this.alertSearchService = alertSearchService;
-        this.aggregationService = aggregationService;
-    }
 
     @GetMapping("/events")
     public SearchResponse<EventDocument> searchEvents(
