@@ -39,7 +39,8 @@ public class TenantFilter implements Filter {
         var httpRequest = (HttpServletRequest) request;
         var httpResponse = (HttpServletResponse) response;
 
-        if (isExcluded(httpRequest.getRequestURI())) {
+        if ("OPTIONS".equalsIgnoreCase(httpRequest.getMethod())
+                || isExcluded(httpRequest.getRequestURI())) {
             chain.doFilter(request, response);
             return;
         }
