@@ -4,9 +4,12 @@ import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRequest;
 import com.example.fraud.fraud.FraudEngine;
 import com.example.fraud.pipeline.LogstashEventPublisher;
+import com.example.fraud.tenant.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.*;
@@ -27,6 +30,12 @@ public class EventController {
 
     @PostMapping
     public Map<String, Object> ingest(@RequestBody EventRequest request) {
+        String contextTenant = TenantContext.getTenantId();
+        if (!contextTenant.equals(request.tenantId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                "Tenant mismatch: header=" + contextTenant + " body=" + request.tenantId());
+        }
+
         EventDocument doc = new EventDocument(
             UUID.randomUUID().toString(),
             request.tenantId(),

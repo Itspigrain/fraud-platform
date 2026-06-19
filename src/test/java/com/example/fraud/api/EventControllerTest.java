@@ -5,7 +5,9 @@ import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRequest;
 import com.example.fraud.fraud.*;
 import com.example.fraud.pipeline.LogstashEventPublisher;
+import com.example.fraud.tenant.TenantContext;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
@@ -13,6 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -20,6 +23,8 @@ class EventControllerTest {
 
     @Test
     void ingestBuildsEventEvaluatesAndPublishes() {
+        TenantContext.setTenantId("t1");
+
         var fraudEngine = mock(FraudEngine.class);
         var publisher = mock(LogstashEventPublisher.class);
 
@@ -49,10 +54,14 @@ class EventControllerTest {
         verify(publisher).writeEvent(any(EventDocument.class));
         verify(publisher).writeAlert(alert);
         verify(publisher).writeAudit(audit);
+
+        TenantContext.clear();
     }
 
     @Test
     void ingestSetsRiskScoreOnEventBeforePublishing() {
+        TenantContext.setTenantId("t1");
+
         var fraudEngine = mock(FraudEngine.class);
         var publisher = mock(LogstashEventPublisher.class);
 
@@ -69,10 +78,14 @@ class EventControllerTest {
         controller.ingest(request);
 
         verify(publisher).writeEvent(argThat(event -> event.riskScore() == 30));
+
+        TenantContext.clear();
     }
 
     @Test
     void ingestDefaultsEventTimeToNowWhenNull() {
+        TenantContext.setTenantId("t1");
+
         var fraudEngine = mock(FraudEngine.class);
         var publisher = mock(LogstashEventPublisher.class);
 
@@ -91,5 +104,27 @@ class EventControllerTest {
 
         verify(publisher).writeEvent(argThat(event ->
             !event.eventTime().isBefore(before) && !event.eventTime().isAfter(after)));
+
+        TenantContext.clear();
+    }
+
+    @Test
+    void ingestReturns403WhenTenantMismatch() {
+        TenantContext.setTenantId("tenant-abc");
+
+        var fraudEngine = mock(FraudEngine.class);
+        var publisher = mock(LogstashEventPublisher.class);
+        var controller = new EventController(fraudEngine, publisher);
+
+        var request = new EventRequest("tenant-xyz", "PAYMENT", "c1", "1.2.3.4",
+            null, null, null, null, Map.of());
+
+        var exception = assertThrows(ResponseStatusException.class,
+            () -> controller.ingest(request));
+
+        assertThat(exception.getStatusCode().value()).isEqualTo(403);
+        verify(fraudEngine, never()).evaluate(any());
+
+        TenantContext.clear();
     }
 }

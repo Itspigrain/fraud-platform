@@ -50,7 +50,7 @@ public class SearchController {
             @RequestParam(defaultValue = "desc") String direction) {
 
         validateRiskScore(riskScoreMin, riskScoreMax);
-        validateSortField(sort, "id", "tenantId", "customerId", "eventType",
+        validateSortField(sort, "id", "customerId", "eventType",
             "sourceIp", "deviceId", "email", "riskScore", "eventTime");
 
         var request = new EventSearchRequest(q, customerId, eventType,
