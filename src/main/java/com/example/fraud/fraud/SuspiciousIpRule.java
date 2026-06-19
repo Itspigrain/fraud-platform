@@ -48,6 +48,7 @@ public class SuspiciousIpRule implements FraudRule {
     private Optional<FraudAlert> buildAlert(EventDocument event, String reason) {
         return Optional.of(new FraudAlert(
             UUID.randomUUID().toString(),
+            event.tenantId(),
             event.id(),
             event.customerId(),
             "SUSPICIOUS_IP",

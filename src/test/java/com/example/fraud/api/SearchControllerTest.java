@@ -49,7 +49,7 @@ class SearchControllerTest {
 
     @Test
     void searchAlertsDelegatesToService() {
-        var alert = new AlertDocument("a1", "e1", "c1", "VELOCITY",
+        var alert = new AlertDocument("a1", "t1", "e1", "c1", "VELOCITY",
             "HIGH", 30, "reason", Instant.parse("2026-06-16T12:00:00Z"));
         var expected = new SearchResponse<>(List.of(alert),
             new PageInfo(0, 20, 1, 1));

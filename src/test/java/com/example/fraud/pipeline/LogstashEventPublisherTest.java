@@ -52,7 +52,7 @@ class LogstashEventPublisherTest {
 
     @Test
     void writeAlertAppendsJsonLineToAlertsFile() throws Exception {
-        var alert = new FraudAlert("a1", "e1", "c1", "HIGH_VALUE", "HIGH",
+        var alert = new FraudAlert("a1", "t1", "e1", "c1", "HIGH_VALUE", "HIGH",
             30, "exceeds threshold", Instant.parse("2026-06-16T12:00:00Z"));
 
         publisher.writeAlert(alert);
@@ -68,7 +68,7 @@ class LogstashEventPublisherTest {
 
     @Test
     void writeAuditAppendsJsonLineToAuditFile() throws Exception {
-        var audit = new AuditEntry("au1", "e1", "c1",
+        var audit = new AuditEntry("au1", "t1", "e1", "c1",
             List.of("HIGH_VALUE", "VELOCITY"), List.of("HIGH_VALUE"),
             30, "ALLOW", Instant.parse("2026-06-16T12:00:00Z"));
 

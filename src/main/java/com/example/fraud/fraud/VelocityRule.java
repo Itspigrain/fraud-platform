@@ -29,8 +29,8 @@ public class VelocityRule implements FraudRule {
         List<EventDocument> recentEvents;
         try {
             Instant tenMinutesAgo = Instant.now().minus(10, ChronoUnit.MINUTES);
-            recentEvents = eventRepository.findByCustomerIdAndEventTimeAfter(
-                event.customerId(), tenMinutesAgo);
+            recentEvents = eventRepository.findByTenantIdAndCustomerIdAndEventTimeAfter(
+                event.tenantId(), event.customerId(), tenMinutesAgo);
         } catch (Exception e) {
             return Optional.empty();
         }
@@ -38,6 +38,7 @@ public class VelocityRule implements FraudRule {
         if (recentEvents.size() > 5) {
             return Optional.of(new FraudAlert(
                 UUID.randomUUID().toString(),
+                event.tenantId(),
                 event.id(),
                 event.customerId(),
                 "VELOCITY",

@@ -17,22 +17,22 @@ class RiskScoreCalculatorTest {
 
     @Test
     void calculateSumsSingleAlertScore() {
-        var alert = new FraudAlert("a1", "e1", "c1", "HIGH_VALUE", "HIGH", 30, "reason", Instant.now());
+        var alert = new FraudAlert("a1", "t1", "e1", "c1", "HIGH_VALUE", "HIGH", 30, "reason", Instant.now());
         assertThat(calculator.calculate(List.of(alert))).isEqualTo(30);
     }
 
     @Test
     void calculateSumsMultipleAlertScores() {
-        var a1 = new FraudAlert("a1", "e1", "c1", "HIGH_VALUE", "HIGH", 30, "r1", Instant.now());
-        var a2 = new FraudAlert("a2", "e1", "c1", "VELOCITY", "MEDIUM", 30, "r2", Instant.now());
+        var a1 = new FraudAlert("a1", "t1", "e1", "c1", "HIGH_VALUE", "HIGH", 30, "r1", Instant.now());
+        var a2 = new FraudAlert("a2", "t1", "e1", "c1", "VELOCITY", "MEDIUM", 30, "r2", Instant.now());
         assertThat(calculator.calculate(List.of(a1, a2))).isEqualTo(60);
     }
 
     @Test
     void calculateCapsAt100() {
-        var a1 = new FraudAlert("a1", "e1", "c1", "HIGH_VALUE", "HIGH", 30, "r1", Instant.now());
-        var a2 = new FraudAlert("a2", "e1", "c1", "IMP_TRAVEL", "CRITICAL", 40, "r2", Instant.now());
-        var a3 = new FraudAlert("a3", "e1", "c1", "SUSPICIOUS_IP", "HIGH", 50, "r3", Instant.now());
+        var a1 = new FraudAlert("a1", "t1", "e1", "c1", "HIGH_VALUE", "HIGH", 30, "r1", Instant.now());
+        var a2 = new FraudAlert("a2", "t1", "e1", "c1", "IMP_TRAVEL", "CRITICAL", 40, "r2", Instant.now());
+        var a3 = new FraudAlert("a3", "t1", "e1", "c1", "SUSPICIOUS_IP", "HIGH", 50, "r3", Instant.now());
         assertThat(calculator.calculate(List.of(a1, a2, a3))).isEqualTo(100);
     }
 

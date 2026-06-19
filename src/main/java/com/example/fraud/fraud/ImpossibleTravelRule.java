@@ -33,7 +33,8 @@ public class ImpossibleTravelRule implements FraudRule {
         Optional<EventDocument> previousEvent;
         try {
             previousEvent = eventRepository
-                .findFirstByCustomerIdOrderByEventTimeDesc(event.customerId());
+                .findFirstByTenantIdAndCustomerIdOrderByEventTimeDesc(
+                    event.tenantId(), event.customerId());
         } catch (Exception e) {
             return Optional.empty();
         }
@@ -53,6 +54,7 @@ public class ImpossibleTravelRule implements FraudRule {
 
         return Optional.of(new FraudAlert(
             UUID.randomUUID().toString(),
+            event.tenantId(),
             event.id(),
             event.customerId(),
             "IMPOSSIBLE_TRAVEL",

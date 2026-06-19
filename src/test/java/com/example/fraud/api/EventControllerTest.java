@@ -23,9 +23,9 @@ class EventControllerTest {
         var fraudEngine = mock(FraudEngine.class);
         var publisher = mock(LogstashEventPublisher.class);
 
-        var alert = new FraudAlert("a1", "ignored", "c1", "HIGH_VALUE", "HIGH",
+        var alert = new FraudAlert("a1", "t1", "ignored", "c1", "HIGH_VALUE", "HIGH",
             30, "reason", Instant.now());
-        var audit = new AuditEntry("au1", "ignored", "c1",
+        var audit = new AuditEntry("au1", "t1", "ignored", "c1",
             List.of("HIGH_VALUE"), List.of("HIGH_VALUE"), 30, "ALLOW", Instant.now());
         var result = new EvaluationResult(List.of(alert), audit);
 
@@ -56,7 +56,7 @@ class EventControllerTest {
         var fraudEngine = mock(FraudEngine.class);
         var publisher = mock(LogstashEventPublisher.class);
 
-        var audit = new AuditEntry("au1", "ignored", "c1",
+        var audit = new AuditEntry("au1", "t1", "ignored", "c1",
             List.of("HIGH_VALUE"), List.of("HIGH_VALUE"), 30, "ALLOW", Instant.now());
         var result = new EvaluationResult(List.of(), audit);
 
@@ -76,7 +76,7 @@ class EventControllerTest {
         var fraudEngine = mock(FraudEngine.class);
         var publisher = mock(LogstashEventPublisher.class);
 
-        var audit = new AuditEntry("au1", "ignored", "c1",
+        var audit = new AuditEntry("au1", "t1", "ignored", "c1",
             List.of(), List.of(), 0, "ALLOW", Instant.now());
         when(fraudEngine.evaluate(any(EventDocument.class)))
             .thenReturn(new EvaluationResult(List.of(), audit));

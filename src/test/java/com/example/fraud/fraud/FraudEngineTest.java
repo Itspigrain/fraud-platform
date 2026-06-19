@@ -19,7 +19,7 @@ class FraudEngineTest {
             @Override public String ruleId() { return "TEST_RULE"; }
             @Override public Optional<FraudAlert> evaluate(EventDocument event) {
                 return Optional.of(new FraudAlert(
-                    UUID.randomUUID().toString(), event.id(), event.customerId(),
+                    UUID.randomUUID().toString(), event.tenantId(), event.id(), event.customerId(),
                     "TEST_RULE", "HIGH", 30, "test", Instant.now()));
             }
         };
@@ -56,7 +56,7 @@ class FraudEngineTest {
             @Override public String ruleId() { return "R1"; }
             @Override public Optional<FraudAlert> evaluate(EventDocument event) {
                 return Optional.of(new FraudAlert(
-                    UUID.randomUUID().toString(), event.id(), event.customerId(),
+                    UUID.randomUUID().toString(), event.tenantId(), event.id(), event.customerId(),
                     "R1", "HIGH", 40, "r1", Instant.now()));
             }
         };
@@ -65,7 +65,7 @@ class FraudEngineTest {
             @Override public String ruleId() { return "R2"; }
             @Override public Optional<FraudAlert> evaluate(EventDocument event) {
                 return Optional.of(new FraudAlert(
-                    UUID.randomUUID().toString(), event.id(), event.customerId(),
+                    UUID.randomUUID().toString(), event.tenantId(), event.id(), event.customerId(),
                     "R2", "HIGH", 50, "r2", Instant.now()));
             }
         };
@@ -80,6 +80,26 @@ class FraudEngineTest {
 
         assertThat(result.audit().compositeRiskScore()).isEqualTo(90);
         assertThat(result.audit().decision()).isEqualTo("BLOCK");
+    }
+
+    @Test
+    void evaluatePropagateTenantIdToAudit() {
+        FraudRule passingRule = new FraudRule() {
+            @Override public String ruleId() { return "PASS"; }
+            @Override public Optional<FraudAlert> evaluate(EventDocument event) {
+                return Optional.empty();
+            }
+        };
+
+        var calculator = new RiskScoreCalculator();
+        var engine = new FraudEngine(List.of(passingRule), calculator);
+
+        var event = new EventDocument("e1", "tenant-xyz", "LOGIN", "c1", "1.2.3.4",
+            null, null, null, Instant.now(), Map.of(), 0);
+
+        var result = engine.evaluate(event);
+
+        assertThat(result.audit().tenantId()).isEqualTo("tenant-xyz");
     }
 
     @Test

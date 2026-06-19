@@ -39,6 +39,7 @@ public class FraudEngine {
 
         AuditEntry audit = new AuditEntry(
             UUID.randomUUID().toString(),
+            event.tenantId(),
             event.id(),
             event.customerId(),
             rulesEvaluated,

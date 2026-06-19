@@ -21,6 +21,7 @@ public class HighValueTransactionRule implements FraudRule {
         if (amount instanceof Number n && n.doubleValue() > 10_000) {
             return Optional.of(new FraudAlert(
                 UUID.randomUUID().toString(),
+                event.tenantId(),
                 event.id(),
                 event.customerId(),
                 "HIGH_VALUE",

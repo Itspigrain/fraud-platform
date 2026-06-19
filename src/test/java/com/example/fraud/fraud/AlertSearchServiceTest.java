@@ -26,7 +26,7 @@ class AlertSearchServiceTest {
     private final AlertSearchService service = new AlertSearchService(operations);
 
     private AlertDocument sampleAlert(String alertId, String customerId, String severity) {
-        return new AlertDocument(alertId, "e1", customerId, "VELOCITY",
+        return new AlertDocument(alertId, "t1", "e1", customerId, "VELOCITY",
             severity, 30, "Too many transactions", Instant.parse("2026-06-16T12:00:00Z"));
     }
 

@@ -44,7 +44,7 @@ class ImpossibleTravelRuleTest {
         var previousEvent = new EventDocument("e1", "t1", "LOGIN", "c1", "1.2.3.4",
             null, null, null, thirtyMinutesAgo, Map.of(), 0);
 
-        when(eventRepository.findFirstByCustomerIdOrderByEventTimeDesc("c1"))
+        when(eventRepository.findFirstByTenantIdAndCustomerIdOrderByEventTimeDesc("t1", "c1"))
             .thenReturn(Optional.of(previousEvent));
         when(geoIpService.getCountry("5.6.7.8")).thenReturn(Optional.of("Russia"));
         when(geoIpService.getCountry("1.2.3.4")).thenReturn(Optional.of("Australia"));
@@ -65,7 +65,7 @@ class ImpossibleTravelRuleTest {
         var previousEvent = new EventDocument("e1", "t1", "LOGIN", "c1", "1.2.3.4",
             null, null, null, now.minus(10, ChronoUnit.MINUTES), Map.of(), 0);
 
-        when(eventRepository.findFirstByCustomerIdOrderByEventTimeDesc("c1"))
+        when(eventRepository.findFirstByTenantIdAndCustomerIdOrderByEventTimeDesc("t1", "c1"))
             .thenReturn(Optional.of(previousEvent));
         when(geoIpService.getCountry("5.6.7.8")).thenReturn(Optional.of("Australia"));
         when(geoIpService.getCountry("1.2.3.4")).thenReturn(Optional.of("Australia"));
@@ -78,7 +78,7 @@ class ImpossibleTravelRuleTest {
         var event = new EventDocument("e1", "t1", "LOGIN", "c1", "1.2.3.4",
             null, null, null, Instant.now(), Map.of(), 0);
 
-        when(eventRepository.findFirstByCustomerIdOrderByEventTimeDesc("c1"))
+        when(eventRepository.findFirstByTenantIdAndCustomerIdOrderByEventTimeDesc("t1", "c1"))
             .thenReturn(Optional.empty());
 
         assertThat(rule.evaluate(event)).isEmpty();
@@ -94,7 +94,7 @@ class ImpossibleTravelRuleTest {
         var previousEvent = new EventDocument("e1", "t1", "LOGIN", "c1", "1.2.3.4",
             null, null, null, fiveHoursAgo, Map.of(), 0);
 
-        when(eventRepository.findFirstByCustomerIdOrderByEventTimeDesc("c1"))
+        when(eventRepository.findFirstByTenantIdAndCustomerIdOrderByEventTimeDesc("t1", "c1"))
             .thenReturn(Optional.of(previousEvent));
         when(geoIpService.getCountry("5.6.7.8")).thenReturn(Optional.of("Russia"));
         when(geoIpService.getCountry("1.2.3.4")).thenReturn(Optional.of("Australia"));
@@ -109,7 +109,7 @@ class ImpossibleTravelRuleTest {
         var previousEvent = new EventDocument("e1", "t1", "LOGIN", "c1", "1.2.3.4",
             null, null, null, Instant.now().minus(10, ChronoUnit.MINUTES), Map.of(), 0);
 
-        when(eventRepository.findFirstByCustomerIdOrderByEventTimeDesc("c1"))
+        when(eventRepository.findFirstByTenantIdAndCustomerIdOrderByEventTimeDesc("t1", "c1"))
             .thenReturn(Optional.of(previousEvent));
         when(geoIpService.getCountry("5.6.7.8")).thenReturn(Optional.empty());
 

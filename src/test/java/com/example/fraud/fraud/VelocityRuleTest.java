@@ -46,7 +46,8 @@ class VelocityRuleTest {
             new EventDocument("e7", "t1", "PAYMENT", "c1", "1.2.3.4", null, null, null, Instant.now(), Map.of(), 0)
         );
 
-        when(eventRepository.findByCustomerIdAndEventTimeAfter(eq("c1"), any(Instant.class)))
+        when(eventRepository.findByTenantIdAndCustomerIdAndEventTimeAfter(
+            eq("t1"), eq("c1"), any(Instant.class)))
             .thenReturn(recentEvents);
 
         var result = rule.evaluate(event);
@@ -67,7 +68,8 @@ class VelocityRuleTest {
             new EventDocument("e2", "t1", "PAYMENT", "c1", "1.2.3.4", null, null, null, Instant.now(), Map.of(), 0)
         );
 
-        when(eventRepository.findByCustomerIdAndEventTimeAfter(eq("c1"), any(Instant.class)))
+        when(eventRepository.findByTenantIdAndCustomerIdAndEventTimeAfter(
+            eq("t1"), eq("c1"), any(Instant.class)))
             .thenReturn(recentEvents);
 
         assertThat(rule.evaluate(event)).isEmpty();
@@ -78,7 +80,8 @@ class VelocityRuleTest {
         var event = new EventDocument("e1", "t1", "LOGIN", "c1", "1.2.3.4",
             null, null, null, Instant.now(), Map.of(), 0);
 
-        when(eventRepository.findByCustomerIdAndEventTimeAfter(eq("c1"), any(Instant.class)))
+        when(eventRepository.findByTenantIdAndCustomerIdAndEventTimeAfter(
+            eq("t1"), eq("c1"), any(Instant.class)))
             .thenReturn(Collections.emptyList());
 
         assertThat(rule.evaluate(event)).isEmpty();

@@ -8,7 +8,9 @@ import java.util.Optional;
 
 public interface EventRepository extends ElasticsearchRepository<EventDocument, String> {
 
-    List<EventDocument> findByCustomerIdAndEventTimeAfter(String customerId, Instant after);
+    List<EventDocument> findByTenantIdAndCustomerIdAndEventTimeAfter(
+        String tenantId, String customerId, Instant after);
 
-    Optional<EventDocument> findFirstByCustomerIdOrderByEventTimeDesc(String customerId);
+    Optional<EventDocument> findFirstByTenantIdAndCustomerIdOrderByEventTimeDesc(
+        String tenantId, String customerId);
 }
