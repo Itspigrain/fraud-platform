@@ -29,3 +29,9 @@ fraud:
         - North Korea
         - Iran
         - Syria
+
+tenant:
+  header-name: X-Tenant-Id
+  super-tenant-value: __super__
+  excluded-paths:
+    - /actuator/health
