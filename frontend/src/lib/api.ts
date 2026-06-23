@@ -8,6 +8,8 @@ import type {
   AlertStatsResponse,
   EventSearchParams,
   AlertSearchParams,
+  RuleResponse,
+  RuleRequest,
 } from './types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -37,6 +39,23 @@ async function fetchJson<T>(path: string, params: Record<string, unknown> = {}):
   return res.json();
 }
 
+async function mutateJson<T>(path: string, method: string, body?: unknown): Promise<T> {
+  const url = `${API_BASE}${path}`;
+  const res = await fetch(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Tenant-Id': TENANT_ID,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    throw new Error(`API error: ${res.status} ${res.statusText}`);
+  }
+  if (res.status === 204) return undefined as T;
+  return res.json();
+}
+
 export function fetchEvents(params: EventSearchParams = {}) {
   return fetchJson<SearchResponse<EventDocument>>('/search/events', params);
 }
@@ -51,4 +70,28 @@ export function fetchEventStats() {
 
 export function fetchAlertStats() {
   return fetchJson<AlertStatsResponse>('/search/alerts/stats');
+}
+
+export function fetchRules() {
+  return fetchJson<RuleResponse[]>('/api/rules');
+}
+
+export function fetchRule(id: number) {
+  return fetchJson<RuleResponse>(`/api/rules/${id}`);
+}
+
+export function createRule(request: RuleRequest) {
+  return mutateJson<RuleResponse>('/api/rules', 'POST', request);
+}
+
+export function updateRule(id: number, request: RuleRequest) {
+  return mutateJson<RuleResponse>(`/api/rules/${id}`, 'PUT', request);
+}
+
+export function deleteRule(id: number, deleteIndex = false) {
+  return mutateJson<void>(`/api/rules/${id}?deleteIndex=${deleteIndex}`, 'DELETE');
+}
+
+export function fetchRuleResults(ruleId: number, params: EventSearchParams = {}) {
+  return fetchJson<SearchResponse<EventDocument>>(`/api/rules/${ruleId}/results`, params);
 }

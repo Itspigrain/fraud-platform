@@ -4,6 +4,8 @@ import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRequest;
 import com.example.fraud.fraud.FraudEngine;
 import com.example.fraud.pipeline.LogstashEventPublisher;
+import com.example.fraud.rule.RuleEntity;
+import com.example.fraud.rule.RuleService;
 import com.example.fraud.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,7 @@ public class EventController {
 
     private final FraudEngine fraudEngine;
     private final LogstashEventPublisher publisher;
+    private final RuleService ruleService;
 
     @PostMapping
     public Map<String, Object> ingest(@RequestBody EventRequest request) {
@@ -52,17 +55,24 @@ public class EventController {
         result.alerts().forEach(publisher::writeAlert);
         publisher.writeAudit(result.audit());
 
-        log.info("fraud_evaluated customer={} score={} decision={} rulesFired={}",
+        List<RuleEntity> matchedRules = ruleService.evaluateEvent(contextTenant, doc);
+        List<String> matchedRuleNames = matchedRules.stream()
+            .map(RuleEntity::getName)
+            .toList();
+
+        log.info("fraud_evaluated customer={} score={} decision={} rulesFired={} userRulesMatched={}",
             doc.customerId(),
             result.audit().compositeRiskScore(),
             result.audit().decision(),
-            result.audit().rulesFired());
+            result.audit().rulesFired(),
+            matchedRuleNames);
 
-        return Map.of(
-            "eventId", doc.id(),
-            "alerts", result.alerts(),
-            "riskScore", result.audit().compositeRiskScore(),
-            "decision", result.audit().decision()
-        );
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("eventId", doc.id());
+        response.put("alerts", result.alerts());
+        response.put("riskScore", result.audit().compositeRiskScore());
+        response.put("decision", result.audit().decision());
+        response.put("matchedRules", matchedRuleNames);
+        return response;
     }
 }

@@ -72,6 +72,51 @@ export interface EventSearchParams {
   direction?: string;
 }
 
+export interface RuleCondition {
+  field: string;
+  operator: ConditionOperator;
+  value: string;
+}
+
+export type ConditionOperator =
+  | 'EQUALS'
+  | 'NOT_EQUALS'
+  | 'GREATER_THAN'
+  | 'LESS_THAN'
+  | 'GREATER_THAN_OR_EQUAL'
+  | 'LESS_THAN_OR_EQUAL'
+  | 'CONTAINS'
+  | 'IN';
+
+export type RuleStatus = 'ACTIVE' | 'INACTIVE';
+export type RuleType = 'CONDITION' | 'VELOCITY';
+
+export interface RuleResponse {
+  id: number;
+  tenantId: string;
+  name: string;
+  description: string | null;
+  ruleType: RuleType;
+  status: RuleStatus;
+  conditions: RuleCondition[];
+  groupByField: string | null;
+  timeWindowMinutes: number | null;
+  threshold: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RuleRequest {
+  name: string;
+  description?: string;
+  ruleType?: RuleType;
+  status?: RuleStatus;
+  conditions?: RuleCondition[];
+  groupByField?: string;
+  timeWindowMinutes?: number;
+  threshold?: number;
+}
+
 export interface AlertSearchParams {
   customerId?: string;
   ruleId?: string;

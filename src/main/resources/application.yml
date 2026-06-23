@@ -1,6 +1,15 @@
 spring:
   elasticsearch:
     uris: ${SPRING_ELASTICSEARCH_URIS:http://localhost:9200}
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/fraud_platform?createDatabaseIfNotExist=true
+    username: ${MYSQL_USER:fraud}
+    password: ${MYSQL_PASSWORD:fraud}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
   data:
     redis:
       host: ${REDIS_HOST:localhost}

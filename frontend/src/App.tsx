@@ -7,16 +7,20 @@ import { Header } from './components/layout/Header';
 import { DashboardPage } from './pages/DashboardPage';
 import { EventsPage } from './pages/EventsPage';
 import { AlertsPage } from './pages/AlertsPage';
+import { RulesPage } from './pages/RulesPage';
+import { RuleResultsPage } from './pages/RuleResultsPage';
 
 const pageTitles: Record<string, string> = {
   '/': 'Dashboard',
   '/events': 'Events',
   '/alerts': 'Alerts',
+  '/rules': 'Rules',
 };
 
 function Layout() {
   const location = useLocation();
-  const title = pageTitles[location.pathname] || 'Fraud Ops';
+  const title = pageTitles[location.pathname]
+    || (location.pathname.startsWith('/rules/') ? 'Rule Results' : 'Fraud Ops');
 
   return (
     <div className="flex h-screen bg-slate-50">
@@ -28,6 +32,8 @@ function Layout() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/alerts" element={<AlertsPage />} />
+            <Route path="/rules" element={<RulesPage />} />
+            <Route path="/rules/:id/results" element={<RuleResultsPage />} />
           </Routes>
         </main>
       </div>

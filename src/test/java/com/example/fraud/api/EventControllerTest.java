@@ -5,6 +5,7 @@ import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRequest;
 import com.example.fraud.fraud.*;
 import com.example.fraud.pipeline.LogstashEventPublisher;
+import com.example.fraud.rule.RuleService;
 import com.example.fraud.tenant.TenantContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,6 +28,8 @@ class EventControllerTest {
 
         var fraudEngine = mock(FraudEngine.class);
         var publisher = mock(LogstashEventPublisher.class);
+        var ruleService = mock(RuleService.class);
+        when(ruleService.evaluateEvent(any(), any())).thenReturn(List.of());
 
         var alert = new FraudAlert("a1", "t1", "ignored", "c1", "HIGH_VALUE", "HIGH",
             30, "reason", Instant.now());
@@ -36,7 +39,7 @@ class EventControllerTest {
 
         when(fraudEngine.evaluate(any(EventDocument.class))).thenReturn(result);
 
-        var controller = new EventController(fraudEngine, publisher);
+        var controller = new EventController(fraudEngine, publisher, ruleService);
         var request = new EventRequest("t1", "PAYMENT", "c1", "1.2.3.4",
             "d1", "a@b.com", "555", Instant.parse("2026-06-16T12:00:00Z"),
             Map.of("amount", 15000));
@@ -64,6 +67,8 @@ class EventControllerTest {
 
         var fraudEngine = mock(FraudEngine.class);
         var publisher = mock(LogstashEventPublisher.class);
+        var ruleService = mock(RuleService.class);
+        when(ruleService.evaluateEvent(any(), any())).thenReturn(List.of());
 
         var audit = new AuditEntry("au1", "t1", "ignored", "c1",
             List.of("HIGH_VALUE"), List.of("HIGH_VALUE"), 30, "ALLOW", Instant.now());
@@ -71,7 +76,7 @@ class EventControllerTest {
 
         when(fraudEngine.evaluate(any(EventDocument.class))).thenReturn(result);
 
-        var controller = new EventController(fraudEngine, publisher);
+        var controller = new EventController(fraudEngine, publisher, ruleService);
         var request = new EventRequest("t1", "LOGIN", "c1", "1.2.3.4",
             null, null, null, null, Map.of());
 
@@ -88,13 +93,15 @@ class EventControllerTest {
 
         var fraudEngine = mock(FraudEngine.class);
         var publisher = mock(LogstashEventPublisher.class);
+        var ruleService = mock(RuleService.class);
+        when(ruleService.evaluateEvent(any(), any())).thenReturn(List.of());
 
         var audit = new AuditEntry("au1", "t1", "ignored", "c1",
             List.of(), List.of(), 0, "ALLOW", Instant.now());
         when(fraudEngine.evaluate(any(EventDocument.class)))
             .thenReturn(new EvaluationResult(List.of(), audit));
 
-        var controller = new EventController(fraudEngine, publisher);
+        var controller = new EventController(fraudEngine, publisher, ruleService);
         var request = new EventRequest("t1", "LOGIN", "c1", "1.2.3.4",
             null, null, null, null, Map.of());
 
@@ -114,7 +121,8 @@ class EventControllerTest {
 
         var fraudEngine = mock(FraudEngine.class);
         var publisher = mock(LogstashEventPublisher.class);
-        var controller = new EventController(fraudEngine, publisher);
+        var ruleService = mock(RuleService.class);
+        var controller = new EventController(fraudEngine, publisher, ruleService);
 
         var request = new EventRequest("tenant-xyz", "PAYMENT", "c1", "1.2.3.4",
             null, null, null, null, Map.of());

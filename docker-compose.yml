@@ -49,6 +49,23 @@ services:
       elasticsearch:
         condition: service_healthy
 
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=fraud_platform
+      - MYSQL_USER=fraud
+      - MYSQL_PASSWORD=fraud
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   redis:
     image: redis:7-alpine
     ports:
@@ -70,12 +87,18 @@ services:
       - FRAUD_LOG_DIR=/logs
       - GEOIP_DB_PATH=${GEOIP_DB_PATH:-}
       - REDIS_HOST=redis
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=fraud
+      - MYSQL_PASSWORD=fraud
     volumes:
       - app-logs:/logs
     depends_on:
       elasticsearch:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      mysql:
         condition: service_healthy
       logstash:
         condition: service_started
@@ -95,3 +118,4 @@ volumes:
   es-data:
   app-logs:
   redis-data:
+  mysql-data:
