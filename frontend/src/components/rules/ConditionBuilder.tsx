@@ -2,34 +2,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { RuleCondition, ConditionOperator } from '@/lib/types';
 
-const CORE_FIELDS = [
-  'riskScore',
-  'eventType',
-  'customerId',
-  'sourceIp',
-  'deviceId',
-  'email',
-  'phoneNumber',
+const ALL_OPERATORS: { value: ConditionOperator; label: string }[] = [
+  { value: 'EQUALS', label: '=' },
+  { value: 'NOT_EQUALS', label: '!=' },
+  { value: 'GREATER_THAN', label: '>' },
+  { value: 'LESS_THAN', label: '<' },
+  { value: 'GREATER_THAN_OR_EQUAL', label: '>=' },
+  { value: 'LESS_THAN_OR_EQUAL', label: '<=' },
+  { value: 'CONTAINS', label: 'contains' },
+  { value: 'IN', label: 'in' },
 ];
-
-const NUMERIC_FIELDS = new Set(['riskScore']);
-
-const ALL_OPERATORS: { value: ConditionOperator; label: string; numeric?: boolean; string?: boolean }[] = [
-  { value: 'EQUALS', label: '=', numeric: true, string: true },
-  { value: 'NOT_EQUALS', label: '!=', numeric: true, string: true },
-  { value: 'GREATER_THAN', label: '>', numeric: true },
-  { value: 'LESS_THAN', label: '<', numeric: true },
-  { value: 'GREATER_THAN_OR_EQUAL', label: '>=', numeric: true },
-  { value: 'LESS_THAN_OR_EQUAL', label: '<=', numeric: true },
-  { value: 'CONTAINS', label: 'contains', string: true },
-  { value: 'IN', label: 'in', string: true },
-];
-
-function getOperators(field: string) {
-  const isNumeric = NUMERIC_FIELDS.has(field) || field.startsWith('attributes.');
-  if (isNumeric) return ALL_OPERATORS.filter(o => o.numeric);
-  return ALL_OPERATORS.filter(o => o.string);
-}
 
 interface ConditionBuilderProps {
   conditions: RuleCondition[];
@@ -43,7 +25,7 @@ export function ConditionBuilder({ conditions, onChange }: ConditionBuilderProps
   };
 
   const addCondition = () => {
-    onChange([...conditions, { field: 'riskScore', operator: 'GREATER_THAN', value: '' }]);
+    onChange([...conditions, { field: '', operator: 'EQUALS', value: '' }]);
   };
 
   const removeCondition = (index: number) => {
@@ -57,10 +39,9 @@ export function ConditionBuilder({ conditions, onChange }: ConditionBuilderProps
         <div key={index} className="flex items-center gap-2">
           <div className="flex-1">
             <Input
-              list="field-options"
               value={condition.field}
               onChange={(e) => updateCondition(index, { field: e.target.value })}
-              placeholder="Field (e.g. riskScore, attributes.amount)"
+              placeholder="Field (e.g. amount, sourceIp)"
               className="text-sm"
             />
           </div>
@@ -69,7 +50,7 @@ export function ConditionBuilder({ conditions, onChange }: ConditionBuilderProps
             onChange={(e) => updateCondition(index, { operator: e.target.value as ConditionOperator })}
             className="h-8 rounded-md border border-input bg-white px-2 text-sm"
           >
-            {getOperators(condition.field).map(op => (
+            {ALL_OPERATORS.map(op => (
               <option key={op.value} value={op.value}>{op.label}</option>
             ))}
           </select>
@@ -92,9 +73,6 @@ export function ConditionBuilder({ conditions, onChange }: ConditionBuilderProps
           </Button>
         </div>
       ))}
-      <datalist id="field-options">
-        {CORE_FIELDS.map(f => <option key={f} value={f} />)}
-      </datalist>
       <Button type="button" variant="outline" size="sm" onClick={addCondition}>
         + Add Condition
       </Button>

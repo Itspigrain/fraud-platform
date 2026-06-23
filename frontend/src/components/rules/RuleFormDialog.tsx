@@ -5,14 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConditionBuilder } from './ConditionBuilder';
 import type { RuleCondition, RuleRequest, RuleResponse, RuleType } from '@/lib/types';
 
-const GROUP_BY_OPTIONS = [
-  'customerId',
-  'sourceIp',
-  'deviceId',
-  'email',
-  'phoneNumber',
-];
-
 interface RuleFormDialogProps {
   rule?: RuleResponse | null;
   onSave: (request: RuleRequest) => void;
@@ -20,23 +12,25 @@ interface RuleFormDialogProps {
 }
 
 export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) {
+  const [eventType, setEventType] = useState('');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [ruleType, setRuleType] = useState<RuleType>('CONDITION');
   const [conditions, setConditions] = useState<RuleCondition[]>([
-    { field: 'riskScore', operator: 'GREATER_THAN', value: '' },
+    { field: '', operator: 'GREATER_THAN', value: '' },
   ]);
-  const [groupByField, setGroupByField] = useState('customerId');
+  const [groupByField, setGroupByField] = useState('');
   const [timeWindowMinutes, setTimeWindowMinutes] = useState(10);
   const [threshold, setThreshold] = useState(5);
 
   useEffect(() => {
     if (rule) {
+      setEventType(rule.eventType || '');
       setName(rule.name);
       setDescription(rule.description || '');
       setRuleType(rule.ruleType || 'CONDITION');
-      setConditions(rule.conditions?.length ? rule.conditions : [{ field: 'riskScore', operator: 'GREATER_THAN', value: '' }]);
-      setGroupByField(rule.groupByField || 'customerId');
+      setConditions(rule.conditions?.length ? rule.conditions : [{ field: '', operator: 'GREATER_THAN', value: '' }]);
+      setGroupByField(rule.groupByField || '');
       setTimeWindowMinutes(rule.timeWindowMinutes || 10);
       setThreshold(rule.threshold || 5);
     }
@@ -45,6 +39,7 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const request: RuleRequest = {
+      eventType,
       name,
       description: description || undefined,
       ruleType,
@@ -62,9 +57,9 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
     onSave(request);
   };
 
-  const isConditionValid = conditions.length > 0 && conditions.every(c => c.value.trim());
-  const isVelocityValid = groupByField && timeWindowMinutes > 0 && threshold > 0;
-  const isValid = name.trim() && (ruleType === 'CONDITION' ? isConditionValid : isVelocityValid);
+  const isConditionValid = conditions.length > 0 && conditions.every(c => c.field.trim() && c.value.trim());
+  const isVelocityValid = groupByField.trim() && timeWindowMinutes > 0 && threshold > 0;
+  const isValid = eventType.trim() && name.trim() && (ruleType === 'CONDITION' ? isConditionValid : isVelocityValid);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -74,14 +69,26 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-slate-700">Name</label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., High Risk Logins"
-                className="mt-1"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-slate-700">Event Type</label>
+                <Input
+                  value={eventType}
+                  onChange={(e) => setEventType(e.target.value)}
+                  placeholder="e.g. purchase, login"
+                  className="mt-1"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700">Name</label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g., High Value Purchase"
+                  className="mt-1"
+                />
+              </div>
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Description</label>
@@ -129,16 +136,13 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
                   Fire when the number of events grouped by a field exceeds a threshold within a time window.
                 </p>
                 <div>
-                  <label className="text-sm font-medium text-slate-700">Group By</label>
-                  <select
+                  <label className="text-sm font-medium text-slate-700">Group By Field</label>
+                  <Input
                     value={groupByField}
                     onChange={(e) => setGroupByField(e.target.value)}
-                    className="mt-1 w-full h-8 rounded-md border border-input bg-white px-2 text-sm"
-                  >
-                    {GROUP_BY_OPTIONS.map(f => (
-                      <option key={f} value={f}>{f}</option>
-                    ))}
-                  </select>
+                    placeholder="e.g. customerId, sourceIp"
+                    className="mt-1"
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
