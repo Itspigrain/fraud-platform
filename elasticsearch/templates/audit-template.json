@@ -1,15 +1,20 @@
 {
   "index_patterns": ["audit-*"],
   "template": {
-    "aliases": {
-      "audit": {}
-    },
+    "aliases": { "audit": {} },
     "settings": {
       "number_of_shards": 1,
-      "number_of_replicas": 0
+      "number_of_replicas": 0,
+      "index.mapping.total_fields.limit": 100,
+      "index.codec": "best_compression",
+      "index.lifecycle.name": "fraud-audit-policy",
+      "index.lifecycle.rollover_alias": "audit",
+      "default_pipeline": "pipeline-audit"
     },
     "mappings": {
+      "dynamic": "strict",
       "properties": {
+        "@timestamp":         { "type": "date" },
         "auditId":            { "type": "keyword" },
         "tenantId":           { "type": "keyword" },
         "eventId":            { "type": "keyword" },
@@ -18,7 +23,8 @@
         "rulesFired":         { "type": "keyword" },
         "compositeRiskScore": { "type": "integer" },
         "decision":           { "type": "keyword" },
-        "evaluatedAt":        { "type": "date" }
+        "evaluatedAt":        { "type": "date" },
+        "pipeline_error":     { "type": "keyword", "index": false }
       }
     }
   }

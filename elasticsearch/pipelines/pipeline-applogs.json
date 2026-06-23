@@ -1,0 +1,32 @@
+{
+  "description": "Application logs: hoist MDC fields, normalise log level",
+  "processors": [
+    {
+      "script": {
+        "lang": "painless",
+        "source": "if (ctx.mdc != null) { if (ctx.mdc.tenantId != null) ctx.tenantId = ctx.mdc.tenantId; if (ctx.mdc.customerId != null) ctx.customerId = ctx.mdc.customerId; if (ctx.mdc.correlationId != null) ctx.correlationId = ctx.mdc.correlationId; }",
+        "ignore_failure": true
+      }
+    },
+    {
+      "uppercase": {
+        "field": "level",
+        "ignore_missing": true
+      }
+    },
+    {
+      "remove": {
+        "field": ["host", "log", "agent", "ecs", "input", "@version", "mdc"],
+        "ignore_missing": true
+      }
+    }
+  ],
+  "on_failure": [
+    {
+      "set": {
+        "field": "pipeline_error",
+        "value": "applogs-pipeline: {{_ingest.on_failure_processor_type}} - {{_ingest.on_failure_message}}"
+      }
+    }
+  ]
+}

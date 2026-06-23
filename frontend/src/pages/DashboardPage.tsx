@@ -16,14 +16,14 @@ export function DashboardPage() {
   const [alertStats, setAlertStats] = useState<AlertStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadData = async () => {
+  const loadData = async () => { console.log('[Dashboard] loadData called');
     setLoading(true);
     try {
-      const [es, as] = await Promise.all([fetchEventStats(), fetchAlertStats()]);
+      console.log('[Dashboard] fetching...'); const [es, as] = await Promise.all([fetchEventStats(), fetchAlertStats()]); console.log('[Dashboard] es:', JSON.stringify(es)); console.log('[Dashboard] as:', JSON.stringify(as));
       setEventStats(es);
       setAlertStats(as);
     } catch (err) {
-      toast.error('Failed to load dashboard data');
+      console.error('[Dashboard] FAILED:', err); toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }

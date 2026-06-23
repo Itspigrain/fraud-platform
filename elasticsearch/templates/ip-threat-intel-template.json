@@ -1,0 +1,23 @@
+{
+  "index_patterns": ["ip-threat-intel"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0,
+      "index.mapping.total_fields.limit": 100,
+      "index.codec": "best_compression"
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "ip":          { "type": "ip" },
+        "type":        { "type": "keyword" },
+        "source":      { "type": "keyword" },
+        "score":       { "type": "integer" },
+        "description": { "type": "keyword", "index": false },
+        "added_at":    { "type": "date" },
+        "expires_at":  { "type": "date" }
+      }
+    }
+  }
+}

@@ -1,5 +1,7 @@
 package com.example.fraud.audit;
 
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 import java.time.Instant;
 import java.util.List;
 
@@ -12,5 +14,5 @@ public record AuditEntry(
     List<String> rulesFired,
     int compositeRiskScore,
     String decision,
-    Instant evaluatedAt
+    @Field(type = FieldType.Date) Instant evaluatedAt
 ) {}

@@ -3,15 +3,21 @@
   "template": {
     "settings": {
       "number_of_shards": 1,
-      "number_of_replicas": 0
+      "number_of_replicas": 0,
+      "index.codec": "best_compression"
     },
     "mappings": {
+      "dynamic": "strict",
       "properties": {
-        "rule_name":    { "type": "keyword" },
-        "severity":     { "type": "keyword" },
-        "message":      { "type": "text" },
-        "conditions":   { "type": "text" },
-        "match_count":  { "type": "integer" }
+        "@timestamp":  { "type": "date" },
+        "rule_name":   { "type": "keyword" },
+        "severity":    { "type": "keyword" },
+        "message":     { "type": "text" },
+        "conditions":  { "type": "keyword", "index": false },
+        "match_count": { "type": "integer" },
+        "alertId":     { "type": "keyword" },
+        "eventId":     { "type": "keyword" },
+        "tenantId":    { "type": "keyword" }
       }
     }
   }
