@@ -9,9 +9,11 @@ import { EventsPage } from './pages/EventsPage';
 import { AlertsPage } from './pages/AlertsPage';
 import { RulesPage } from './pages/RulesPage';
 import { RuleResultsPage } from './pages/RuleResultsPage';
+import { SchemasPage } from './pages/SchemasPage';
 
 const pageTitles: Record<string, string> = {
   '/': 'Dashboard',
+  '/schemas': 'Event Schemas',
   '/events': 'Events',
   '/alerts': 'Alerts',
   '/rules': 'Rules',
@@ -30,6 +32,7 @@ function Layout() {
         <main className="flex-1 overflow-auto">
           <Routes>
             <Route path="/" element={<DashboardPage />} />
+            <Route path="/schemas" element={<SchemasPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/alerts" element={<AlertsPage />} />
             <Route path="/rules" element={<RulesPage />} />

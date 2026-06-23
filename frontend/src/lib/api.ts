@@ -10,6 +10,8 @@ import type {
   AlertSearchParams,
   RuleResponse,
   RuleRequest,
+  SchemaResponse,
+  SchemaRequest,
 } from './types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -56,21 +58,49 @@ async function mutateJson<T>(path: string, method: string, body?: unknown): Prom
   return res.json();
 }
 
-export function fetchEvents(params: EventSearchParams = {}) {
-  return fetchJson<SearchResponse<EventDocument>>('/search/events', params);
+// --- Schemas ---
+
+export function fetchSchemas() {
+  return fetchJson<SchemaResponse[]>('/schemas');
 }
 
-export function fetchAlerts(params: AlertSearchParams = {}) {
-  return fetchJson<SearchResponse<AlertDocument>>('/search/alerts', params);
+export function fetchSchema(eventType: string) {
+  return fetchJson<SchemaResponse>(`/schemas/${eventType}`);
+}
+
+export function createSchema(request: SchemaRequest) {
+  return mutateJson<SchemaResponse>('/schemas', 'POST', request);
+}
+
+export function updateSchema(eventType: string, request: SchemaRequest) {
+  return mutateJson<SchemaResponse>(`/schemas/${eventType}`, 'PUT', request);
+}
+
+export function deleteSchema(eventType: string) {
+  return mutateJson<void>(`/schemas/${eventType}`, 'DELETE');
+}
+
+// --- Events ---
+
+export function fetchEvents(params: EventSearchParams = {}) {
+  return fetchJson<SearchResponse<EventDocument>>('/search/events', params);
 }
 
 export function fetchEventStats() {
   return fetchJson<EventStatsResponse>('/search/events/stats');
 }
 
+// --- Alerts ---
+
+export function fetchAlerts(params: AlertSearchParams = {}) {
+  return fetchJson<SearchResponse<AlertDocument>>('/search/alerts', params);
+}
+
 export function fetchAlertStats() {
   return fetchJson<AlertStatsResponse>('/search/alerts/stats');
 }
+
+// --- Rules ---
 
 export function fetchRules() {
   return fetchJson<RuleResponse[]>('/api/rules');
