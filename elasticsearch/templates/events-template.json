@@ -6,10 +6,17 @@
     },
     "settings": {
       "number_of_shards": 1,
-      "number_of_replicas": 0
+      "number_of_replicas": 0,
+      "index.mapping.total_fields.limit": 200,
+      "index.codec": "best_compression",
+      "index.lifecycle.name": "fraud-events-policy",
+      "index.lifecycle.rollover_alias": "events",
+      "default_pipeline": "pipeline-events"
     },
     "mappings": {
+      "dynamic": "strict",
       "properties": {
+        "@timestamp":   { "type": "date" },
         "id":           { "type": "keyword" },
         "tenantId":     { "type": "keyword" },
         "eventType":    { "type": "keyword" },
@@ -20,7 +27,20 @@
         "phoneNumber":  { "type": "keyword" },
         "eventTime":    { "type": "date" },
         "riskScore":    { "type": "integer" },
-        "attributes":   { "type": "object", "dynamic": true },
+        "decision":     { "type": "keyword" },
+        "amount":       { "type": "scaled_float", "scaling_factor": 100 },
+        "merchant":     { "type": "keyword" },
+        "category":     { "type": "keyword" },
+        "attributes":   { "type": "flattened" },
+        "pipeline_error": { "type": "keyword", "index": false },
+        "threat": {
+          "properties": {
+            "type":        { "type": "keyword" },
+            "source":      { "type": "keyword" },
+            "score":       { "type": "integer" },
+            "description": { "type": "keyword", "index": false }
+          }
+        },
         "geoip": {
           "properties": {
             "country_name": { "type": "keyword" },

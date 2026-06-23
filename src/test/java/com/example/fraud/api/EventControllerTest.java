@@ -4,6 +4,7 @@ import com.example.fraud.audit.AuditEntry;
 import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRequest;
 import com.example.fraud.fraud.*;
+import com.example.fraud.pipeline.ElasticsearchEventPublisher;
 import com.example.fraud.pipeline.LogstashEventPublisher;
 import com.example.fraud.tenant.TenantContext;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,8 @@ class EventControllerTest {
         TenantContext.setTenantId("t1");
 
         var fraudEngine = mock(FraudEngine.class);
-        var publisher = mock(LogstashEventPublisher.class);
+        var logstash = mock(LogstashEventPublisher.class);
+        var esPublisher = mock(ElasticsearchEventPublisher.class);
 
         var alert = new FraudAlert("a1", "t1", "ignored", "c1", "HIGH_VALUE", "HIGH",
             30, "reason", Instant.now());
@@ -36,7 +38,7 @@ class EventControllerTest {
 
         when(fraudEngine.evaluate(any(EventDocument.class))).thenReturn(result);
 
-        var controller = new EventController(fraudEngine, publisher);
+        var controller = new EventController(fraudEngine, logstash, esPublisher);
         var request = new EventRequest("t1", "PAYMENT", "c1", "1.2.3.4",
             "d1", "a@b.com", "555", Instant.parse("2026-06-16T12:00:00Z"),
             Map.of("amount", 15000));
@@ -51,9 +53,12 @@ class EventControllerTest {
         var alerts = (List<FraudAlert>) response.get("alerts");
         assertThat(alerts).hasSize(1);
 
-        verify(publisher).writeEvent(any(EventDocument.class));
-        verify(publisher).writeAlert(alert);
-        verify(publisher).writeAudit(audit);
+        verify(logstash).writeEvent(any(EventDocument.class));
+        verify(logstash).writeAlert(alert);
+        verify(logstash).writeAudit(audit);
+        verify(esPublisher).writeEvent(any(EventDocument.class));
+        verify(esPublisher).writeAlert(alert);
+        verify(esPublisher).writeAudit(audit);
 
         TenantContext.clear();
     }
@@ -63,7 +68,8 @@ class EventControllerTest {
         TenantContext.setTenantId("t1");
 
         var fraudEngine = mock(FraudEngine.class);
-        var publisher = mock(LogstashEventPublisher.class);
+        var logstash = mock(LogstashEventPublisher.class);
+        var esPublisher = mock(ElasticsearchEventPublisher.class);
 
         var audit = new AuditEntry("au1", "t1", "ignored", "c1",
             List.of("HIGH_VALUE"), List.of("HIGH_VALUE"), 30, "ALLOW", Instant.now());
@@ -71,13 +77,13 @@ class EventControllerTest {
 
         when(fraudEngine.evaluate(any(EventDocument.class))).thenReturn(result);
 
-        var controller = new EventController(fraudEngine, publisher);
+        var controller = new EventController(fraudEngine, logstash, esPublisher);
         var request = new EventRequest("t1", "LOGIN", "c1", "1.2.3.4",
             null, null, null, null, Map.of());
 
         controller.ingest(request);
 
-        verify(publisher).writeEvent(argThat(event -> event.riskScore() == 30));
+        verify(esPublisher).writeEvent(argThat(event -> event.riskScore() == 30));
 
         TenantContext.clear();
     }
@@ -87,14 +93,15 @@ class EventControllerTest {
         TenantContext.setTenantId("t1");
 
         var fraudEngine = mock(FraudEngine.class);
-        var publisher = mock(LogstashEventPublisher.class);
+        var logstash = mock(LogstashEventPublisher.class);
+        var esPublisher = mock(ElasticsearchEventPublisher.class);
 
         var audit = new AuditEntry("au1", "t1", "ignored", "c1",
             List.of(), List.of(), 0, "ALLOW", Instant.now());
         when(fraudEngine.evaluate(any(EventDocument.class)))
             .thenReturn(new EvaluationResult(List.of(), audit));
 
-        var controller = new EventController(fraudEngine, publisher);
+        var controller = new EventController(fraudEngine, logstash, esPublisher);
         var request = new EventRequest("t1", "LOGIN", "c1", "1.2.3.4",
             null, null, null, null, Map.of());
 
@@ -102,7 +109,7 @@ class EventControllerTest {
         controller.ingest(request);
         Instant after = Instant.now();
 
-        verify(publisher).writeEvent(argThat(event ->
+        verify(esPublisher).writeEvent(argThat(event ->
             !event.eventTime().isBefore(before) && !event.eventTime().isAfter(after)));
 
         TenantContext.clear();
@@ -113,8 +120,9 @@ class EventControllerTest {
         TenantContext.setTenantId("tenant-abc");
 
         var fraudEngine = mock(FraudEngine.class);
-        var publisher = mock(LogstashEventPublisher.class);
-        var controller = new EventController(fraudEngine, publisher);
+        var logstash = mock(LogstashEventPublisher.class);
+        var esPublisher = mock(ElasticsearchEventPublisher.class);
+        var controller = new EventController(fraudEngine, logstash, esPublisher);
 
         var request = new EventRequest("tenant-xyz", "PAYMENT", "c1", "1.2.3.4",
             null, null, null, null, Map.of());

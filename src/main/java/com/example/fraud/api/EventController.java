@@ -3,6 +3,7 @@ package com.example.fraud.api;
 import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRequest;
 import com.example.fraud.fraud.FraudEngine;
+import com.example.fraud.pipeline.ElasticsearchEventPublisher;
 import com.example.fraud.pipeline.LogstashEventPublisher;
 import com.example.fraud.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,8 @@ import java.util.*;
 public class EventController {
 
     private final FraudEngine fraudEngine;
-    private final LogstashEventPublisher publisher;
+    private final LogstashEventPublisher logstashPublisher;
+    private final ElasticsearchEventPublisher esPublisher;
 
     @PostMapping
     public Map<String, Object> ingest(@RequestBody EventRequest request) {
@@ -48,9 +50,13 @@ public class EventController {
         var result = fraudEngine.evaluate(doc);
         doc = doc.withRiskScore(result.audit().compositeRiskScore());
 
-        publisher.writeEvent(doc);
-        result.alerts().forEach(publisher::writeAlert);
-        publisher.writeAudit(result.audit());
+        esPublisher.writeEvent(doc);
+        result.alerts().forEach(esPublisher::writeAlert);
+        esPublisher.writeAudit(result.audit());
+
+        logstashPublisher.writeEvent(doc);
+        result.alerts().forEach(logstashPublisher::writeAlert);
+        logstashPublisher.writeAudit(result.audit());
 
         log.info("fraud_evaluated customer={} score={} decision={} rulesFired={}",
             doc.customerId(),

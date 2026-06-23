@@ -1,0 +1,27 @@
+{
+  "description": "Fraud audit: timestamp normalisation only - no enrichment on compliance records",
+  "processors": [
+    {
+      "date": {
+        "field": "evaluatedAt",
+        "target_field": "@timestamp",
+        "formats": ["ISO8601"],
+        "ignore_failure": true
+      }
+    },
+    {
+      "remove": {
+        "field": ["host", "log", "agent", "ecs", "input", "@version"],
+        "ignore_missing": true
+      }
+    }
+  ],
+  "on_failure": [
+    {
+      "set": {
+        "field": "pipeline_error",
+        "value": "audit-pipeline: {{_ingest.on_failure_processor_type}} - {{_ingest.on_failure_message}}"
+      }
+    }
+  ]
+}

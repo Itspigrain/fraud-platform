@@ -1,10 +1,13 @@
 spring:
   elasticsearch:
     uris: ${SPRING_ELASTICSEARCH_URIS:http://localhost:9200}
+    username: ${SPRING_ELASTICSEARCH_USERNAME:}
+    password: ${SPRING_ELASTICSEARCH_PASSWORD:}
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
   cache:
     type: redis
     redis:
@@ -23,7 +26,18 @@ management:
         include: health,metrics
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
+
+# ─────────────────────────────────────────────────────────────
+# Ingest pipeline names — must match what init-templates.sh loaded.
+# The Java repository layer appends ?pipeline=<name> to index requests.
+# ─────────────────────────────────────────────────────────────
+elasticsearch:
+  pipelines:
+    events: pipeline-events
+    alerts: pipeline-alerts
+    audit:  pipeline-audit
+    applogs: pipeline-applogs
 
 fraud:
   pipeline:
@@ -32,6 +46,7 @@ fraud:
     database-path: ${GEOIP_DB_PATH:}
   rules:
     suspicious-ip:
+      # Seed blocklist — supplement with live feeds via sync-ip-feeds.sh
       blocked-ips:
         - 10.0.0.1
       high-risk-countries:
