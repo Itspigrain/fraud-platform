@@ -3,6 +3,7 @@ package com.example.fraud.api;
 import com.example.fraud.audit.AuditEntry;
 import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRequest;
+import com.example.fraud.fraud.FraudAlert;
 import com.example.fraud.pipeline.LogstashEventPublisher;
 import com.example.fraud.rule.RuleEntity;
 import com.example.fraud.rule.RuleService;
@@ -69,6 +70,19 @@ public class EventController {
         List<String> matchedRuleNames = matchedRules.stream()
             .map(RuleEntity::getName)
             .toList();
+
+        for (RuleEntity rule : matchedRules) {
+            FraudAlert alert = new FraudAlert(
+                UUID.randomUUID().toString(),
+                tenantId,
+                doc.id(),
+                rule.getName(),
+                "HIGH",
+                rule.getDescription(),
+                Instant.now()
+            );
+            publisher.writeAlert(alert);
+        }
 
         AuditEntry audit = new AuditEntry(
             UUID.randomUUID().toString(),
