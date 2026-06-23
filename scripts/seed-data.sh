@@ -44,13 +44,13 @@ echo ""
 # --- Step 2: Create rules ---
 echo "[2/4] Creating rules"
 
-post "/rules" "tenant-ecommerce" "Rule: high-value purchase" \
+post "/api/rules" "tenant-ecommerce" "Rule: high-value purchase" \
   '{"eventType":"purchase","name":"High Value Purchase","description":"Flag purchases over $10,000","ruleType":"CONDITION","conditions":[{"field":"amount","operator":"GREATER_THAN","value":"10000"}]}'
 
-post "/rules" "tenant-ecommerce" "Rule: purchase velocity" \
+post "/api/rules" "tenant-ecommerce" "Rule: purchase velocity" \
   '{"eventType":"purchase","name":"Purchase Velocity","description":"Flag >5 purchases in 10 minutes","ruleType":"VELOCITY","groupByField":"customerId","timeWindowMinutes":10,"threshold":5}'
 
-post "/rules" "tenant-banking" "Rule: large transfer" \
+post "/api/rules" "tenant-banking" "Rule: large transfer" \
   '{"eventType":"transfer","name":"Large Transfer","description":"Flag transfers over $25,000","ruleType":"CONDITION","conditions":[{"field":"amount","operator":"GREATER_THAN","value":"25000"}]}'
 
 echo ""
