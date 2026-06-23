@@ -4,13 +4,7 @@ import java.time.Instant;
 
 public record EventSearchRequest(
     String q,
-    String customerId,
     String eventType,
-    String sourceIp,
-    String deviceId,
-    String email,
-    Integer riskScoreMin,
-    Integer riskScoreMax,
     Instant from,
     Instant to,
     int page,
