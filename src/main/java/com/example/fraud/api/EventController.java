@@ -1,11 +1,14 @@
 package com.example.fraud.api;
 
+import com.example.fraud.audit.AuditEntry;
 import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRequest;
-import com.example.fraud.fraud.FraudEngine;
 import com.example.fraud.pipeline.LogstashEventPublisher;
 import com.example.fraud.rule.RuleEntity;
 import com.example.fraud.rule.RuleService;
+import com.example.fraud.schema.EventSchemaEntity;
+import com.example.fraud.schema.SchemaService;
+import com.example.fraud.schema.SchemaValidationService;
 import com.example.fraud.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,57 +25,70 @@ import java.util.*;
 @RequiredArgsConstructor
 public class EventController {
 
-    private final FraudEngine fraudEngine;
+    private final SchemaService schemaService;
+    private final SchemaValidationService validationService;
     private final LogstashEventPublisher publisher;
     private final RuleService ruleService;
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public Map<String, Object> ingest(@RequestBody EventRequest request) {
-        String contextTenant = TenantContext.getTenantId();
-        if (!contextTenant.equals(request.tenantId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                "Tenant mismatch: header=" + contextTenant + " body=" + request.tenantId());
+        String tenantId = TenantContext.getTenantId();
+
+        if (request.eventType() == null || request.eventType().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "eventType is required");
         }
+
+        EventSchemaEntity schema = schemaService.findSchema(tenantId, request.eventType())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "No schema registered for event type: " + request.eventType()));
+
+        var fields = schema.getParsedFields();
+        var violations = validationService.validateAttributes(
+            request.attributes() != null ? request.attributes() : Map.of(), fields);
+
+        if (!violations.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Validation errors: " + violations);
+        }
+
+        Map<String, Object> cleanAttributes = validationService.stripUnknownFields(
+            request.attributes() != null ? request.attributes() : Map.of(), fields);
 
         EventDocument doc = new EventDocument(
             UUID.randomUUID().toString(),
-            request.tenantId(),
+            tenantId,
             request.eventType(),
-            request.customerId(),
-            request.sourceIp(),
-            request.deviceId(),
-            request.email(),
-            request.phoneNumber(),
-            request.eventTime() == null ? Instant.now() : request.eventTime(),
-            request.attributes(),
-            0
+            request.eventTime() != null ? request.eventTime() : Instant.now(),
+            cleanAttributes
         );
 
-        var result = fraudEngine.evaluate(doc);
-        doc = doc.withRiskScore(result.audit().compositeRiskScore());
-
         publisher.writeEvent(doc);
-        result.alerts().forEach(publisher::writeAlert);
-        publisher.writeAudit(result.audit());
 
-        List<RuleEntity> matchedRules = ruleService.evaluateEvent(contextTenant, doc);
+        List<RuleEntity> matchedRules = ruleService.evaluateEvent(tenantId, request.eventType(), doc);
         List<String> matchedRuleNames = matchedRules.stream()
             .map(RuleEntity::getName)
             .toList();
 
-        log.info("fraud_evaluated customer={} score={} decision={} rulesFired={} userRulesMatched={}",
-            doc.customerId(),
-            result.audit().compositeRiskScore(),
-            result.audit().decision(),
-            result.audit().rulesFired(),
-            matchedRuleNames);
+        AuditEntry audit = new AuditEntry(
+            UUID.randomUUID().toString(),
+            tenantId,
+            doc.id(),
+            List.of(),
+            matchedRuleNames,
+            matchedRules.isEmpty() ? "ALLOW" : "REVIEW",
+            Instant.now()
+        );
+        publisher.writeAudit(audit);
+
+        log.info("event_ingested tenant={} eventType={} eventId={} rulesMatched={}",
+            tenantId, request.eventType(), doc.id(), matchedRuleNames);
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("eventId", doc.id());
-        response.put("alerts", result.alerts());
-        response.put("riskScore", result.audit().compositeRiskScore());
-        response.put("decision", result.audit().decision());
+        response.put("eventType", doc.eventType());
         response.put("matchedRules", matchedRuleNames);
+        response.put("decision", audit.decision());
         return response;
     }
 }
