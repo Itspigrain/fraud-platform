@@ -2,7 +2,6 @@ package com.example.fraud.pipeline;
 
 import com.example.fraud.audit.AuditEntry;
 import com.example.fraud.event.EventDocument;
-import com.example.fraud.fraud.FraudAlert;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -28,10 +27,6 @@ public class LogstashEventPublisher {
 
     public void writeEvent(EventDocument event) {
         appendJson("events.json", event);
-    }
-
-    public void writeAlert(FraudAlert alert) {
-        appendJson("alerts.json", alert);
     }
 
     public void writeAudit(AuditEntry audit) {

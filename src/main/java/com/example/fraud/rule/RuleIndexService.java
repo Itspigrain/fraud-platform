@@ -62,13 +62,7 @@ public class RuleIndexService {
             Map.entry("id", Map.of("type", "keyword")),
             Map.entry("tenantId", Map.of("type", "keyword")),
             Map.entry("eventType", Map.of("type", "keyword")),
-            Map.entry("customerId", Map.of("type", "keyword")),
-            Map.entry("sourceIp", Map.of("type", "ip")),
-            Map.entry("deviceId", Map.of("type", "keyword")),
-            Map.entry("email", Map.of("type", "keyword")),
-            Map.entry("phoneNumber", Map.of("type", "keyword")),
             Map.entry("eventTime", Map.of("type", "date")),
-            Map.entry("riskScore", Map.of("type", "integer")),
             Map.entry("attributes", Map.of("type", "object", "dynamic", true))
         ));
     }

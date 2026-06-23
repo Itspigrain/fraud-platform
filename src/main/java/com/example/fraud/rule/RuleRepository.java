@@ -9,4 +9,6 @@ public interface RuleRepository extends JpaRepository<RuleEntity, Long> {
     List<RuleEntity> findByTenantId(String tenantId);
 
     List<RuleEntity> findByTenantIdAndStatus(String tenantId, RuleStatus status);
+
+    List<RuleEntity> findByTenantIdAndEventTypeAndStatus(String tenantId, String eventType, RuleStatus status);
 }

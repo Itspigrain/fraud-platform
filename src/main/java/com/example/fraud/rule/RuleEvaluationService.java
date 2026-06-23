@@ -2,6 +2,7 @@ package com.example.fraud.rule;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import com.example.fraud.event.EventDocument;
+import com.example.fraud.schema.SchemaIndexService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
@@ -41,20 +42,21 @@ public class RuleEvaluationService {
     }
 
     private boolean matchesVelocityRule(EventDocument event, RuleEntity rule) {
-        Object groupValue = resolveField(event, rule.getGroupByField());
+        String groupByField = rule.getGroupByField();
+        Object groupValue = resolveField(event, groupByField);
         if (groupValue == null) {
             return false;
         }
 
+        String esField = groupByField.startsWith("attributes.") ? groupByField : "attributes." + groupByField;
+
         Instant cutoff = Instant.now().minus(rule.getTimeWindowMinutes(), ChronoUnit.MINUTES);
+        String indexName = SchemaIndexService.tenantIndexName(event.tenantId());
 
         var query = NativeQuery.builder()
             .withQuery(q -> q.bool(b -> b
                 .must(QueryBuilders.term(t -> t
-                    .field("tenantId")
-                    .value(event.tenantId())))
-                .must(QueryBuilders.term(t -> t
-                    .field(rule.getGroupByField())
+                    .field(esField)
                     .value(String.valueOf(groupValue))))
                 .must(QueryBuilders.range(r -> r
                     .date(d -> d
@@ -63,12 +65,12 @@ public class RuleEvaluationService {
             .build();
 
         long count = elasticsearchTemplate.count(query, EventDocument.class,
-            IndexCoordinates.of("events"));
+            IndexCoordinates.of(indexName));
 
         boolean exceeded = count >= rule.getThreshold();
         if (exceeded) {
             log.info("Velocity rule '{}' fired: {}={} count={} threshold={}",
-                rule.getName(), rule.getGroupByField(), groupValue,
+                rule.getName(), groupByField, groupValue,
                 count, rule.getThreshold());
         }
         return exceeded;
@@ -96,22 +98,11 @@ public class RuleEvaluationService {
     }
 
     Object resolveField(EventDocument event, String field) {
-        if (field.startsWith("attributes.")) {
-            String attrKey = field.substring("attributes.".length());
-            Map<String, Object> attrs = event.attributes();
-            return attrs != null ? attrs.get(attrKey) : null;
-        }
+        if (field.equals("eventType")) return event.eventType();
 
-        return switch (field) {
-            case "riskScore" -> event.riskScore();
-            case "eventType" -> event.eventType();
-            case "customerId" -> event.customerId();
-            case "sourceIp" -> event.sourceIp();
-            case "deviceId" -> event.deviceId();
-            case "email" -> event.email();
-            case "phoneNumber" -> event.phoneNumber();
-            default -> null;
-        };
+        String attrKey = field.startsWith("attributes.") ? field.substring("attributes.".length()) : field;
+        Map<String, Object> attrs = event.attributes();
+        return attrs != null ? attrs.get(attrKey) : null;
     }
 
     private int compareNumeric(String actual, String expected) {

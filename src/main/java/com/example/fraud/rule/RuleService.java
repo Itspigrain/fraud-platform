@@ -25,6 +25,7 @@ public class RuleService {
     public RuleResponse create(String tenantId, RuleRequest request) {
         RuleEntity entity = new RuleEntity();
         entity.setTenantId(tenantId);
+        entity.setEventType(request.eventType());
         entity.setName(request.name());
         entity.setDescription(request.description());
         entity.setRuleType(request.ruleType() != null ? request.ruleType() : RuleType.CONDITION);
@@ -43,7 +44,7 @@ public class RuleService {
         indexService.createIndex(tenantId, entity.getId());
         invalidateCache(tenantId);
 
-        log.info("Created rule id={} name={} tenant={}", entity.getId(), entity.getName(), tenantId);
+        log.info("Created rule id={} name={} tenant={} eventType={}", entity.getId(), entity.getName(), tenantId, request.eventType());
         return RuleResponse.from(entity);
     }
 
@@ -61,6 +62,7 @@ public class RuleService {
     public RuleResponse update(String tenantId, Long ruleId, RuleRequest request) {
         RuleEntity entity = findByIdAndTenant(tenantId, ruleId);
 
+        if (request.eventType() != null) entity.setEventType(request.eventType());
         if (request.name() != null) entity.setName(request.name());
         if (request.description() != null) entity.setDescription(request.description());
         if (request.status() != null) entity.setStatus(request.status());
@@ -90,8 +92,8 @@ public class RuleService {
         log.info("Deleted rule id={} tenant={} indexDeleted={}", ruleId, tenantId, deleteIndex);
     }
 
-    public List<RuleEntity> evaluateEvent(String tenantId, EventDocument event) {
-        List<RuleEntity> activeRules = getActiveRules(tenantId);
+    public List<RuleEntity> evaluateEvent(String tenantId, String eventType, EventDocument event) {
+        List<RuleEntity> activeRules = getActiveRules(tenantId, eventType);
         if (activeRules.isEmpty()) {
             return List.of();
         }
@@ -105,13 +107,14 @@ public class RuleService {
         return matched;
     }
 
-    private List<RuleEntity> getActiveRules(String tenantId) {
-        return activeRulesCache.computeIfAbsent(tenantId,
-            t -> ruleRepository.findByTenantIdAndStatus(t, RuleStatus.ACTIVE));
+    private List<RuleEntity> getActiveRules(String tenantId, String eventType) {
+        String cacheKey = tenantId + ":" + eventType;
+        return activeRulesCache.computeIfAbsent(cacheKey,
+            k -> ruleRepository.findByTenantIdAndEventTypeAndStatus(tenantId, eventType, RuleStatus.ACTIVE));
     }
 
     private void invalidateCache(String tenantId) {
-        activeRulesCache.remove(tenantId);
+        activeRulesCache.keySet().removeIf(key -> key.startsWith(tenantId + ":"));
     }
 
     private RuleEntity findByIdAndTenant(String tenantId, Long ruleId) {

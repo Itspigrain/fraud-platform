@@ -4,12 +4,9 @@ import java.time.Instant;
 
 public record AlertSearchRequest(
     String q,
-    String customerId,
     String ruleId,
     String severity,
     String eventId,
-    Integer riskScoreMin,
-    Integer riskScoreMax,
     Instant from,
     Instant to,
     int page,

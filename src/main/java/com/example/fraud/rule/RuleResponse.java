@@ -6,6 +6,7 @@ import java.util.List;
 public record RuleResponse(
     Long id,
     String tenantId,
+    String eventType,
     String name,
     String description,
     RuleType ruleType,
@@ -24,6 +25,7 @@ public record RuleResponse(
         return new RuleResponse(
             entity.getId(),
             entity.getTenantId(),
+            entity.getEventType(),
             entity.getName(),
             entity.getDescription(),
             entity.getRuleType(),

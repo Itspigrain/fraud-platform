@@ -3,6 +3,7 @@ package com.example.fraud.rule;
 import java.util.List;
 
 public record RuleRequest(
+    String eventType,
     String name,
     String description,
     RuleType ruleType,

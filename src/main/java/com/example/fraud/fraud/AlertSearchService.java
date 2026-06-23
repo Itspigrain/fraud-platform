@@ -23,26 +23,14 @@ public class AlertSearchService {
             if (request.q() != null && !request.q().isBlank()) {
                 b.must(Query.of(q -> q.multiMatch(m -> m
                     .query(request.q())
-                    .fields("reason", "customerId", "ruleId"))));
+                    .fields("reason", "ruleId"))));
             }
             if (!TenantContext.isSuperTenant()) {
                 addTermFilter(b, "tenantId", TenantContext.getTenantId());
             }
-            addTermFilter(b, "customerId", request.customerId());
             addTermFilter(b, "ruleId", request.ruleId());
             addTermFilter(b, "severity", request.severity());
             addTermFilter(b, "eventId", request.eventId());
-            if (request.riskScoreMin() != null || request.riskScoreMax() != null) {
-                b.filter(Query.of(q -> q.range(r -> {
-                    var nr = r.number(n -> {
-                        n.field("riskScore");
-                        if (request.riskScoreMin() != null) n.gte((double) request.riskScoreMin());
-                        if (request.riskScoreMax() != null) n.lte((double) request.riskScoreMax());
-                        return n;
-                    });
-                    return nr;
-                })));
-            }
             if (request.from() != null || request.to() != null) {
                 b.filter(Query.of(q -> q.range(r -> r.date(d -> {
                     d.field("detectedAt");

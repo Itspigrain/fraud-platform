@@ -27,6 +27,9 @@ public class RuleEntity {
     private String tenantId;
 
     @Column(nullable = false)
+    private String eventType;
+
+    @Column(nullable = false)
     private String name;
 
     @Column(columnDefinition = "TEXT")

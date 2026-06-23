@@ -39,15 +39,6 @@ fraud:
     log-dir: ${FRAUD_LOG_DIR:logs}
   geoip:
     database-path: ${GEOIP_DB_PATH:}
-  rules:
-    suspicious-ip:
-      blocked-ips:
-        - 10.0.0.1
-      high-risk-countries:
-        - North Korea
-        - Iran
-        - Syria
-
 tenant:
   header-name: X-Tenant-Id
   super-tenant-value: __super__
