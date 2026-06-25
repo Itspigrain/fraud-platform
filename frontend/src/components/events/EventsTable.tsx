@@ -1,19 +1,9 @@
-// frontend/src/components/events/EventsTable.tsx
-
 import { Fragment, useState } from 'react';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { EventDocument, PageInfo } from '@/lib/types';
-
-function riskBadge(score: number) {
-  if (score === 0) return <Badge variant="secondary" className="bg-green-100 text-green-800">{score}</Badge>;
-  if (score < 30) return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">{score}</Badge>;
-  if (score < 60) return <Badge variant="secondary" className="bg-orange-100 text-orange-800">{score}</Badge>;
-  return <Badge variant="destructive">{score}</Badge>;
-}
 
 interface EventsTableProps {
   events: EventDocument[];
@@ -40,17 +30,11 @@ export function EventsTable({ events, page, onPageChange, onSort, sortField, sor
             <TableHead className="cursor-pointer" onClick={() => onSort('eventTime')}>
               Time{sortIcon('eventTime')}
             </TableHead>
-            <TableHead className="cursor-pointer" onClick={() => onSort('customerId')}>
-              Customer{sortIcon('customerId')}
-            </TableHead>
             <TableHead className="cursor-pointer" onClick={() => onSort('eventType')}>
               Type{sortIcon('eventType')}
             </TableHead>
             <TableHead>Tenant</TableHead>
-            <TableHead>Source IP</TableHead>
-            <TableHead className="cursor-pointer" onClick={() => onSort('riskScore')}>
-              Risk{sortIcon('riskScore')}
-            </TableHead>
+            <TableHead>Attributes</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -61,27 +45,25 @@ export function EventsTable({ events, page, onPageChange, onSort, sortField, sor
                 onClick={() => setExpandedId(expandedId === e.id ? null : e.id)}
               >
                 <TableCell className="text-sm">{new Date(e.eventTime).toLocaleString()}</TableCell>
-                <TableCell className="font-mono text-sm">{e.customerId}</TableCell>
-                <TableCell>{e.eventType}</TableCell>
-                <TableCell>{e.tenantId}</TableCell>
-                <TableCell className="font-mono text-sm">{e.sourceIp}</TableCell>
-                <TableCell>{riskBadge(e.riskScore)}</TableCell>
+                <TableCell className="font-medium">{e.eventType}</TableCell>
+                <TableCell className="text-sm">{e.tenantId}</TableCell>
+                <TableCell className="text-sm text-slate-500">
+                  {e.attributes ? Object.keys(e.attributes).slice(0, 3).join(', ') : '—'}
+                  {e.attributes && Object.keys(e.attributes).length > 3 && ` +${Object.keys(e.attributes).length - 3}`}
+                </TableCell>
               </TableRow>
               {expandedId === e.id && (
                 <TableRow>
-                  <TableCell colSpan={6} className="bg-slate-50 p-4">
-                    <div className="grid grid-cols-4 gap-4 text-sm">
-                      <div><span className="text-slate-500">Device:</span> {e.deviceId}</div>
-                      <div><span className="text-slate-500">Email:</span> {e.email}</div>
-                      <div><span className="text-slate-500">Phone:</span> {e.phoneNumber}</div>
+                  <TableCell colSpan={4} className="bg-slate-50 p-4">
+                    <div className="text-sm space-y-2">
                       <div><span className="text-slate-500">ID:</span> <span className="font-mono">{e.id}</span></div>
+                      {e.attributes && Object.keys(e.attributes).length > 0 && (
+                        <div>
+                          <span className="text-slate-500">Attributes:</span>
+                          <pre className="text-xs bg-white p-2 rounded mt-1 border">{JSON.stringify(e.attributes, null, 2)}</pre>
+                        </div>
+                      )}
                     </div>
-                    {e.attributes && Object.keys(e.attributes).length > 0 && (
-                      <div className="mt-2">
-                        <span className="text-slate-500 text-sm">Attributes:</span>
-                        <pre className="text-xs bg-white p-2 rounded mt-1 border">{JSON.stringify(e.attributes, null, 2)}</pre>
-                      </div>
-                    )}
                   </TableCell>
                 </TableRow>
               )}

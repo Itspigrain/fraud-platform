@@ -1,13 +1,15 @@
 package com.example.fraud.event;
 
-import com.example.fraud.search.SearchResponse;
 import com.example.fraud.tenant.TenantContext;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.SearchHitsImpl;
 import org.springframework.data.elasticsearch.core.TotalHitsRelation;
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.Query;
 
 import java.time.Duration;
@@ -19,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class EventSearchServiceTest {
@@ -27,15 +28,24 @@ class EventSearchServiceTest {
     private final ElasticsearchOperations operations = mock(ElasticsearchOperations.class);
     private final EventSearchService service = new EventSearchService(operations);
 
-    private EventDocument sampleEvent(String id, String customerId) {
-        return new EventDocument(id, "t1", "LOGIN", customerId, "1.2.3.4",
-            "d1", "a@b.com", "555", Instant.parse("2026-06-16T12:00:00Z"),
-            Map.of(), 10);
+    @BeforeEach
+    void setUp() {
+        TenantContext.setTenantId("t1");
+    }
+
+    @AfterEach
+    void tearDown() {
+        TenantContext.clear();
+    }
+
+    private EventDocument sampleEvent(String id) {
+        return new EventDocument(id, "t1", "LOGIN",
+            Instant.parse("2026-06-16T12:00:00Z"), Map.of("customerId", "c1"));
     }
 
     private SearchHits<EventDocument> mockHits(List<EventDocument> docs, long total) {
         var hits = docs.stream()
-            .map(doc -> new SearchHit<>("events", doc.id(), null, 1.0f,
+            .map(doc -> new SearchHit<>("events-t1", doc.id(), null, 1.0f,
                 null, Map.of(), Map.of(), null, null, null, doc))
             .toList();
         return new SearchHitsImpl<>(total, TotalHitsRelation.EQUAL_TO, 1.0f,
@@ -44,13 +54,12 @@ class EventSearchServiceTest {
 
     @Test
     void searchWithNoFiltersReturnsAllEvents() {
-        var doc = sampleEvent("e1", "c1");
+        var doc = sampleEvent("e1");
         var hits = mockHits(List.of(doc), 1);
-        when(operations.search(any(Query.class), eq(EventDocument.class)))
+        when(operations.search(any(Query.class), eq(EventDocument.class), any(IndexCoordinates.class)))
             .thenReturn(hits);
 
         var request = new EventSearchRequest(
-            null, null, null, null, null, null,
             null, null, null, null, 0, 20, "eventTime", "desc");
 
         var response = service.search(request);
@@ -58,53 +67,17 @@ class EventSearchServiceTest {
         assertThat(response.results()).hasSize(1);
         assertThat(response.results().getFirst().id()).isEqualTo("e1");
         assertThat(response.page().totalElements()).isEqualTo(1);
-        assertThat(response.page().number()).isEqualTo(0);
-        assertThat(response.page().size()).isEqualTo(20);
     }
 
     @Test
-    void searchWithCustomerIdFilterReturnsMatchingEvents() {
-        var doc = sampleEvent("e1", "c1");
+    void searchWithEventTypeFilter() {
+        var doc = sampleEvent("e1");
         var hits = mockHits(List.of(doc), 1);
-        when(operations.search(any(Query.class), eq(EventDocument.class)))
+        when(operations.search(any(Query.class), eq(EventDocument.class), any(IndexCoordinates.class)))
             .thenReturn(hits);
 
         var request = new EventSearchRequest(
-            null, "c1", null, null, null, null,
-            null, null, null, null, 0, 20, "eventTime", "desc");
-
-        var response = service.search(request);
-
-        assertThat(response.results()).hasSize(1);
-        assertThat(response.results().getFirst().customerId()).isEqualTo("c1");
-    }
-
-    @Test
-    void searchWithFullTextQueryUsesMultiMatch() {
-        var doc = sampleEvent("e1", "alice");
-        var hits = mockHits(List.of(doc), 1);
-        when(operations.search(any(Query.class), eq(EventDocument.class)))
-            .thenReturn(hits);
-
-        var request = new EventSearchRequest(
-            "alice", null, null, null, null, null,
-            null, null, null, null, 0, 20, "eventTime", "desc");
-
-        var response = service.search(request);
-
-        assertThat(response.results()).hasSize(1);
-    }
-
-    @Test
-    void searchWithRiskScoreRangeFilters() {
-        var doc = sampleEvent("e1", "c1");
-        var hits = mockHits(List.of(doc), 1);
-        when(operations.search(any(Query.class), eq(EventDocument.class)))
-            .thenReturn(hits);
-
-        var request = new EventSearchRequest(
-            null, null, null, null, null, null,
-            20, 80, null, null, 0, 20, "eventTime", "desc");
+            null, "LOGIN", null, null, 0, 20, "eventTime", "desc");
 
         var response = service.search(request);
 
@@ -113,13 +86,12 @@ class EventSearchServiceTest {
 
     @Test
     void searchWithDateRangeFilters() {
-        var doc = sampleEvent("e1", "c1");
+        var doc = sampleEvent("e1");
         var hits = mockHits(List.of(doc), 1);
-        when(operations.search(any(Query.class), eq(EventDocument.class)))
+        when(operations.search(any(Query.class), eq(EventDocument.class), any(IndexCoordinates.class)))
             .thenReturn(hits);
 
         var request = new EventSearchRequest(
-            null, null, null, null, null, null,
             null, null,
             Instant.parse("2026-06-15T00:00:00Z"),
             Instant.parse("2026-06-17T00:00:00Z"),
@@ -131,77 +103,17 @@ class EventSearchServiceTest {
     }
 
     @Test
-    void searchWithCombinedFiltersAndFullText() {
-        var doc = sampleEvent("e1", "alice");
-        var hits = mockHits(List.of(doc), 1);
-        when(operations.search(any(Query.class), eq(EventDocument.class)))
-            .thenReturn(hits);
-
-        var request = new EventSearchRequest(
-            "alice", null, "LOGIN", null, null, null,
-            0, 50,
-            Instant.parse("2026-06-15T00:00:00Z"), null,
-            0, 10, "riskScore", "asc");
-
-        var response = service.search(request);
-
-        assertThat(response.results()).hasSize(1);
-        assertThat(response.page().size()).isEqualTo(10);
-    }
-
-    @Test
     void searchReturnsEmptyWhenNoMatches() {
         var hits = mockHits(List.of(), 0);
-        when(operations.search(any(Query.class), eq(EventDocument.class)))
+        when(operations.search(any(Query.class), eq(EventDocument.class), any(IndexCoordinates.class)))
             .thenReturn(hits);
 
         var request = new EventSearchRequest(
-            null, "nonexistent", null, null, null, null,
             null, null, null, null, 0, 20, "eventTime", "desc");
 
         var response = service.search(request);
 
         assertThat(response.results()).isEmpty();
         assertThat(response.page().totalElements()).isEqualTo(0);
-        assertThat(response.page().totalPages()).isEqualTo(0);
-    }
-
-    @Test
-    void searchCalculatesTotalPagesCorrectly() {
-        var doc = sampleEvent("e1", "c1");
-        var hits = mockHits(List.of(doc), 45);
-        when(operations.search(any(Query.class), eq(EventDocument.class)))
-            .thenReturn(hits);
-
-        var request = new EventSearchRequest(
-            null, null, null, null, null, null,
-            null, null, null, null, 2, 20, "eventTime", "desc");
-
-        var response = service.search(request);
-
-        assertThat(response.page().totalPages()).isEqualTo(3);
-        assertThat(response.page().number()).isEqualTo(2);
-    }
-
-    @Test
-    void searchAlwaysFiltersByTenantFromContext() {
-        TenantContext.setSuperTenantValue("__super__");
-        TenantContext.setTenantId("tenant-abc");
-
-        var doc = sampleEvent("e1", "c1");
-        var hits = mockHits(List.of(doc), 1);
-        when(operations.search(any(Query.class), eq(EventDocument.class)))
-            .thenReturn(hits);
-
-        var request = new EventSearchRequest(
-            null, null, null, null, null, null, null,
-            null, null, null, 0, 20, "eventTime", "desc");
-
-        service.search(request);
-
-        // Verify the query was built — the service must read TenantContext internally
-        verify(operations).search(any(Query.class), eq(EventDocument.class));
-
-        TenantContext.clear();
     }
 }

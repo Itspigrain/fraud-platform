@@ -29,13 +29,7 @@ public class SearchController {
     @GetMapping("/events")
     public SearchResponse<EventDocument> searchEvents(
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) String customerId,
             @RequestParam(required = false) String eventType,
-            @RequestParam(required = false) String sourceIp,
-            @RequestParam(required = false) String deviceId,
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) Integer riskScoreMin,
-            @RequestParam(required = false) Integer riskScoreMax,
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to,
             @RequestParam(defaultValue = "0") int page,
@@ -43,12 +37,7 @@ public class SearchController {
             @RequestParam(defaultValue = "eventTime") String sort,
             @RequestParam(defaultValue = "desc") String direction) {
 
-        validateRiskScore(riskScoreMin, riskScoreMax);
-        validateSortField(sort, "id", "customerId", "eventType",
-            "sourceIp", "deviceId", "email", "riskScore", "eventTime");
-
-        var request = new EventSearchRequest(q, customerId, eventType,
-            sourceIp, deviceId, email, riskScoreMin, riskScoreMax,
+        var request = new EventSearchRequest(q, eventType,
             parseInstant(from, "from"), parseInstant(to, "to"),
             page, size, sort, direction);
 
@@ -58,12 +47,9 @@ public class SearchController {
     @GetMapping("/alerts")
     public SearchResponse<AlertDocument> searchAlerts(
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) String customerId,
             @RequestParam(required = false) String ruleId,
             @RequestParam(required = false) String severity,
             @RequestParam(required = false) String eventId,
-            @RequestParam(required = false) Integer riskScoreMin,
-            @RequestParam(required = false) Integer riskScoreMax,
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to,
             @RequestParam(defaultValue = "0") int page,
@@ -71,12 +57,8 @@ public class SearchController {
             @RequestParam(defaultValue = "detectedAt") String sort,
             @RequestParam(defaultValue = "desc") String direction) {
 
-        validateRiskScore(riskScoreMin, riskScoreMax);
-        validateSortField(sort, "alertId", "eventId", "customerId", "ruleId",
-            "severity", "riskScore", "detectedAt");
-
-        var request = new AlertSearchRequest(q, customerId, ruleId, severity,
-            eventId, riskScoreMin, riskScoreMax,
+        var request = new AlertSearchRequest(q, ruleId, severity,
+            eventId,
             parseInstant(from, "from"), parseInstant(to, "to"),
             page, size, sort, direction);
 
@@ -86,13 +68,7 @@ public class SearchController {
     @GetMapping("/events/stats")
     public StatsResponse eventStats(
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) String customerId,
             @RequestParam(required = false) String eventType,
-            @RequestParam(required = false) String sourceIp,
-            @RequestParam(required = false) String deviceId,
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) Integer riskScoreMin,
-            @RequestParam(required = false) Integer riskScoreMax,
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to,
             @RequestParam(defaultValue = "0") int page,
@@ -100,8 +76,7 @@ public class SearchController {
             @RequestParam(defaultValue = "eventTime") String sort,
             @RequestParam(defaultValue = "desc") String direction) {
 
-        var request = new EventSearchRequest(q, customerId, eventType,
-            sourceIp, deviceId, email, riskScoreMin, riskScoreMax,
+        var request = new EventSearchRequest(q, eventType,
             parseInstant(from, "from"), parseInstant(to, "to"),
             page, size, sort, direction);
 
@@ -111,12 +86,9 @@ public class SearchController {
     @GetMapping("/alerts/stats")
     public StatsResponse alertStats(
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) String customerId,
             @RequestParam(required = false) String ruleId,
             @RequestParam(required = false) String severity,
             @RequestParam(required = false) String eventId,
-            @RequestParam(required = false) Integer riskScoreMin,
-            @RequestParam(required = false) Integer riskScoreMax,
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to,
             @RequestParam(defaultValue = "0") int page,
@@ -124,8 +96,8 @@ public class SearchController {
             @RequestParam(defaultValue = "detectedAt") String sort,
             @RequestParam(defaultValue = "desc") String direction) {
 
-        var request = new AlertSearchRequest(q, customerId, ruleId, severity,
-            eventId, riskScoreMin, riskScoreMax,
+        var request = new AlertSearchRequest(q, ruleId, severity,
+            eventId,
             parseInstant(from, "from"), parseInstant(to, "to"),
             page, size, sort, direction);
 
@@ -140,24 +112,5 @@ public class SearchController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "Invalid ISO-8601 date for '" + paramName + "': " + value);
         }
-    }
-
-    private void validateRiskScore(Integer min, Integer max) {
-        if (min != null && (min < 0 || min > 100)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "riskScoreMin must be between 0 and 100");
-        }
-        if (max != null && (max < 0 || max > 100)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "riskScoreMax must be between 0 and 100");
-        }
-    }
-
-    private void validateSortField(String sort, String... allowed) {
-        for (var field : allowed) {
-            if (field.equals(sort)) return;
-        }
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-            "Invalid sort field: " + sort);
     }
 }

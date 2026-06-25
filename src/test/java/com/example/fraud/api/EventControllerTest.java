@@ -1,130 +1,111 @@
 package com.example.fraud.api;
 
-import com.example.fraud.audit.AuditEntry;
 import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRequest;
-import com.example.fraud.fraud.*;
 import com.example.fraud.pipeline.LogstashEventPublisher;
+import com.example.fraud.rule.RuleService;
+import com.example.fraud.schema.*;
 import com.example.fraud.tenant.TenantContext;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class EventControllerTest {
 
-    @Test
-    void ingestBuildsEventEvaluatesAndPublishes() {
+    @Mock private SchemaService schemaService;
+    @Mock private SchemaValidationService validationService;
+    @Mock private LogstashEventPublisher publisher;
+    @Mock private RuleService ruleService;
+
+    private EventController controller;
+
+    @BeforeEach
+    void setUp() {
         TenantContext.setTenantId("t1");
+        controller = new EventController(schemaService, validationService, publisher, ruleService);
+    }
 
-        var fraudEngine = mock(FraudEngine.class);
-        var publisher = mock(LogstashEventPublisher.class);
+    @AfterEach
+    void tearDown() {
+        TenantContext.clear();
+    }
 
-        var alert = new FraudAlert("a1", "t1", "ignored", "c1", "HIGH_VALUE", "HIGH",
-            30, "reason", Instant.now());
-        var audit = new AuditEntry("au1", "t1", "ignored", "c1",
-            List.of("HIGH_VALUE"), List.of("HIGH_VALUE"), 30, "ALLOW", Instant.now());
-        var result = new EvaluationResult(List.of(alert), audit);
+    @Test
+    void ingestValidatesAndPublishesEvent() {
+        var schema = new EventSchemaEntity();
+        schema.setTenantId("t1");
+        schema.setEventType("purchase");
+        schema.setFieldsFromList(List.of(
+            new SchemaFieldDefinition("amount", SchemaFieldType.DOUBLE, true, null)
+        ));
 
-        when(fraudEngine.evaluate(any(EventDocument.class))).thenReturn(result);
+        when(schemaService.findSchema("t1", "purchase")).thenReturn(Optional.of(schema));
+        when(validationService.validateAttributes(anyMap(), anyList())).thenReturn(List.of());
+        when(validationService.stripUnknownFields(anyMap(), anyList())).thenReturn(Map.of("amount", 99.0));
+        when(ruleService.evaluateEvent(eq("t1"), eq("purchase"), any())).thenReturn(List.of());
 
-        var controller = new EventController(fraudEngine, publisher);
-        var request = new EventRequest("t1", "PAYMENT", "c1", "1.2.3.4",
-            "d1", "a@b.com", "555", Instant.parse("2026-06-16T12:00:00Z"),
-            Map.of("amount", 15000));
-
+        var request = new EventRequest("purchase", Instant.now(), Map.of("amount", 99.0));
         var response = controller.ingest(request);
 
         assertThat(response.get("eventId")).isNotNull();
-        assertThat(response.get("riskScore")).isEqualTo(30);
+        assertThat(response.get("eventType")).isEqualTo("purchase");
         assertThat(response.get("decision")).isEqualTo("ALLOW");
-
-        @SuppressWarnings("unchecked")
-        var alerts = (List<FraudAlert>) response.get("alerts");
-        assertThat(alerts).hasSize(1);
-
         verify(publisher).writeEvent(any(EventDocument.class));
-        verify(publisher).writeAlert(alert);
-        verify(publisher).writeAudit(audit);
-
-        TenantContext.clear();
+        verify(publisher).writeAudit(any());
     }
 
     @Test
-    void ingestSetsRiskScoreOnEventBeforePublishing() {
-        TenantContext.setTenantId("t1");
+    void ingestRejectsMissingSchema() {
+        when(schemaService.findSchema("t1", "unknown")).thenReturn(Optional.empty());
 
-        var fraudEngine = mock(FraudEngine.class);
-        var publisher = mock(LogstashEventPublisher.class);
+        var request = new EventRequest("unknown", Instant.now(), Map.of());
 
-        var audit = new AuditEntry("au1", "t1", "ignored", "c1",
-            List.of("HIGH_VALUE"), List.of("HIGH_VALUE"), 30, "ALLOW", Instant.now());
-        var result = new EvaluationResult(List.of(), audit);
-
-        when(fraudEngine.evaluate(any(EventDocument.class))).thenReturn(result);
-
-        var controller = new EventController(fraudEngine, publisher);
-        var request = new EventRequest("t1", "LOGIN", "c1", "1.2.3.4",
-            null, null, null, null, Map.of());
-
-        controller.ingest(request);
-
-        verify(publisher).writeEvent(argThat(event -> event.riskScore() == 30));
-
-        TenantContext.clear();
+        assertThatThrownBy(() -> controller.ingest(request))
+            .isInstanceOf(ResponseStatusException.class)
+            .hasMessageContaining("No schema registered");
     }
 
     @Test
-    void ingestDefaultsEventTimeToNowWhenNull() {
-        TenantContext.setTenantId("t1");
+    void ingestRejectsValidationFailures() {
+        var schema = new EventSchemaEntity();
+        schema.setTenantId("t1");
+        schema.setEventType("purchase");
+        schema.setFieldsFromList(List.of(
+            new SchemaFieldDefinition("amount", SchemaFieldType.DOUBLE, true, null)
+        ));
 
-        var fraudEngine = mock(FraudEngine.class);
-        var publisher = mock(LogstashEventPublisher.class);
+        when(schemaService.findSchema("t1", "purchase")).thenReturn(Optional.of(schema));
+        when(validationService.validateAttributes(anyMap(), anyList()))
+            .thenReturn(List.of(new SchemaValidationService.Violation("amount", "required")));
 
-        var audit = new AuditEntry("au1", "t1", "ignored", "c1",
-            List.of(), List.of(), 0, "ALLOW", Instant.now());
-        when(fraudEngine.evaluate(any(EventDocument.class)))
-            .thenReturn(new EvaluationResult(List.of(), audit));
+        var request = new EventRequest("purchase", Instant.now(), Map.of());
 
-        var controller = new EventController(fraudEngine, publisher);
-        var request = new EventRequest("t1", "LOGIN", "c1", "1.2.3.4",
-            null, null, null, null, Map.of());
-
-        Instant before = Instant.now();
-        controller.ingest(request);
-        Instant after = Instant.now();
-
-        verify(publisher).writeEvent(argThat(event ->
-            !event.eventTime().isBefore(before) && !event.eventTime().isAfter(after)));
-
-        TenantContext.clear();
+        assertThatThrownBy(() -> controller.ingest(request))
+            .isInstanceOf(ResponseStatusException.class)
+            .hasMessageContaining("Validation errors");
     }
 
     @Test
-    void ingestReturns403WhenTenantMismatch() {
-        TenantContext.setTenantId("tenant-abc");
+    void ingestRejectsMissingEventType() {
+        var request = new EventRequest(null, Instant.now(), Map.of());
 
-        var fraudEngine = mock(FraudEngine.class);
-        var publisher = mock(LogstashEventPublisher.class);
-        var controller = new EventController(fraudEngine, publisher);
-
-        var request = new EventRequest("tenant-xyz", "PAYMENT", "c1", "1.2.3.4",
-            null, null, null, null, Map.of());
-
-        var exception = assertThrows(ResponseStatusException.class,
-            () -> controller.ingest(request));
-
-        assertThat(exception.getStatusCode().value()).isEqualTo(403);
-        verify(fraudEngine, never()).evaluate(any());
-
-        TenantContext.clear();
+        assertThatThrownBy(() -> controller.ingest(request))
+            .isInstanceOf(ResponseStatusException.class)
+            .hasMessageContaining("eventType is required");
     }
 }

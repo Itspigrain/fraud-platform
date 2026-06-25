@@ -1,0 +1,771 @@
+openapi: 3.1.0
+info:
+  title: Fraud Platform API
+  description: Multi-tenant fraud detection platform for ingesting events, defining schemas and rules, and searching results.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+security:
+  - tenantHeader: []
+
+paths:
+  /events:
+    post:
+      operationId: ingestEvent
+      summary: Ingest a fraud event
+      description: |
+        Validates the event against its registered schema, evaluates matching rules,
+        and returns a decision (ALLOW or REVIEW).
+      tags: [Events]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+      responses:
+        '201':
+          description: Event ingested successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventIngestResponse'
+        '400':
+          description: Validation error (missing eventType, unknown schema, or field violations)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /search/events:
+    get:
+      operationId: searchEvents
+      summary: Search events
+      tags: [Search]
+      parameters:
+        - $ref: '#/components/parameters/q'
+        - name: eventType
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/from'
+        - $ref: '#/components/parameters/to'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: eventTime
+        - $ref: '#/components/parameters/direction'
+      responses:
+        '200':
+          description: Paginated event results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventSearchResponse'
+        '400':
+          description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /search/alerts:
+    get:
+      operationId: searchAlerts
+      summary: Search alerts
+      tags: [Search]
+      parameters:
+        - $ref: '#/components/parameters/q'
+        - name: ruleId
+          in: query
+          schema:
+            type: string
+        - name: severity
+          in: query
+          schema:
+            type: string
+        - name: eventId
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/from'
+        - $ref: '#/components/parameters/to'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: detectedAt
+        - $ref: '#/components/parameters/direction'
+      responses:
+        '200':
+          description: Paginated alert results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertSearchResponse'
+        '400':
+          description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /search/events/stats:
+    get:
+      operationId: eventStats
+      summary: Aggregated event statistics
+      tags: [Search]
+      parameters:
+        - $ref: '#/components/parameters/q'
+        - name: eventType
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/from'
+        - $ref: '#/components/parameters/to'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: eventTime
+        - $ref: '#/components/parameters/direction'
+      responses:
+        '200':
+          description: Event aggregation buckets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponse'
+        '400':
+          description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /search/alerts/stats:
+    get:
+      operationId: alertStats
+      summary: Aggregated alert statistics
+      tags: [Search]
+      parameters:
+        - $ref: '#/components/parameters/q'
+        - name: ruleId
+          in: query
+          schema:
+            type: string
+        - name: severity
+          in: query
+          schema:
+            type: string
+        - name: eventId
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/from'
+        - $ref: '#/components/parameters/to'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: detectedAt
+        - $ref: '#/components/parameters/direction'
+      responses:
+        '200':
+          description: Alert aggregation buckets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponse'
+        '400':
+          description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/rules:
+    post:
+      operationId: createRule
+      summary: Create a fraud detection rule
+      tags: [Rules]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleRequest'
+      responses:
+        '201':
+          description: Rule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleResponse'
+
+    get:
+      operationId: listRules
+      summary: List all rules for the tenant
+      tags: [Rules]
+      responses:
+        '200':
+          description: List of rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RuleResponse'
+
+  /api/rules/{id}:
+    get:
+      operationId: getRule
+      summary: Get a rule by ID
+      tags: [Rules]
+      parameters:
+        - $ref: '#/components/parameters/ruleId'
+      responses:
+        '200':
+          description: Rule details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleResponse'
+
+    put:
+      operationId: updateRule
+      summary: Update a rule
+      tags: [Rules]
+      parameters:
+        - $ref: '#/components/parameters/ruleId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleRequest'
+      responses:
+        '200':
+          description: Rule updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleResponse'
+
+    delete:
+      operationId: deleteRule
+      summary: Delete a rule
+      tags: [Rules]
+      parameters:
+        - $ref: '#/components/parameters/ruleId'
+        - name: deleteIndex
+          in: query
+          description: Whether to also delete the associated Elasticsearch index
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '204':
+          description: Rule deleted
+
+  /api/rules/{id}/results:
+    get:
+      operationId: getRuleResults
+      summary: Get events that matched a rule
+      tags: [Rules]
+      parameters:
+        - $ref: '#/components/parameters/ruleId'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: eventTime
+        - $ref: '#/components/parameters/direction'
+      responses:
+        '200':
+          description: Paginated event results matching the rule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventSearchResponse'
+
+  /schemas:
+    post:
+      operationId: createSchema
+      summary: Create an event schema
+      tags: [Schemas]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemaRequest'
+      responses:
+        '201':
+          description: Schema created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaResponse'
+
+    get:
+      operationId: listSchemas
+      summary: List all schemas for the tenant
+      tags: [Schemas]
+      responses:
+        '200':
+          description: List of schemas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SchemaResponse'
+
+  /schemas/{eventType}:
+    get:
+      operationId: getSchema
+      summary: Get a schema by event type
+      tags: [Schemas]
+      parameters:
+        - $ref: '#/components/parameters/eventType'
+      responses:
+        '200':
+          description: Schema details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaResponse'
+
+    put:
+      operationId: updateSchema
+      summary: Update a schema
+      tags: [Schemas]
+      parameters:
+        - $ref: '#/components/parameters/eventType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemaRequest'
+      responses:
+        '200':
+          description: Schema updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaResponse'
+
+    delete:
+      operationId: deleteSchema
+      summary: Delete a schema
+      tags: [Schemas]
+      parameters:
+        - $ref: '#/components/parameters/eventType'
+      responses:
+        '204':
+          description: Schema deleted
+
+  /schemas/{eventType}/fields:
+    get:
+      operationId: getSchemaFields
+      summary: Get field definitions for a schema
+      tags: [Schemas]
+      parameters:
+        - $ref: '#/components/parameters/eventType'
+      responses:
+        '200':
+          description: List of field definitions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SchemaFieldDefinition'
+
+components:
+  securitySchemes:
+    tenantHeader:
+      type: apiKey
+      in: header
+      name: X-Tenant-Id
+      description: Required tenant identifier for multi-tenant isolation
+
+  parameters:
+    q:
+      name: q
+      in: query
+      description: Full-text search query
+      schema:
+        type: string
+
+    from:
+      name: from
+      in: query
+      description: Start time filter (ISO-8601, e.g. 2024-01-01T00:00:00Z)
+      schema:
+        type: string
+        format: date-time
+
+    to:
+      name: to
+      in: query
+      description: End time filter (ISO-8601)
+      schema:
+        type: string
+        format: date-time
+
+    page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+
+    size:
+      name: size
+      in: query
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+
+    direction:
+      name: direction
+      in: query
+      schema:
+        type: string
+        default: desc
+        enum: [asc, desc]
+
+    ruleId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+
+    eventType:
+      name: eventType
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    EventRequest:
+      type: object
+      required: [eventType]
+      properties:
+        eventType:
+          type: string
+        eventTime:
+          type: string
+          format: date-time
+        attributes:
+          type: object
+          additionalProperties: true
+
+    EventIngestResponse:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+        matchedRules:
+          type: array
+          items:
+            type: string
+        decision:
+          type: string
+          enum: [ALLOW, REVIEW]
+
+    EventDocument:
+      type: object
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        eventType:
+          type: string
+        eventTime:
+          type: string
+          format: date-time
+        attributes:
+          type: object
+          additionalProperties: true
+
+    AlertDocument:
+      type: object
+      properties:
+        alertId:
+          type: string
+        tenantId:
+          type: string
+        eventId:
+          type: string
+        ruleId:
+          type: string
+        severity:
+          type: string
+        reason:
+          type: string
+        detectedAt:
+          type: string
+          format: date-time
+
+    PageInfo:
+      type: object
+      properties:
+        number:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    EventSearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventDocument'
+        page:
+          $ref: '#/components/schemas/PageInfo'
+
+    AlertSearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlertDocument'
+        page:
+          $ref: '#/components/schemas/PageInfo'
+
+    StatsResponse:
+      type: object
+      properties:
+        aggregations:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: object
+              additionalProperties: true
+
+    RuleRequest:
+      type: object
+      required: [eventType, name]
+      properties:
+        eventType:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        ruleType:
+          $ref: '#/components/schemas/RuleType'
+        status:
+          $ref: '#/components/schemas/RuleStatus'
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleCondition'
+        groupByField:
+          type: string
+          description: Field to group by (VELOCITY rules)
+        timeWindowMinutes:
+          type: integer
+          description: Time window in minutes (VELOCITY and LLM_EVALUATOR rules)
+        threshold:
+          type: integer
+          description: Count threshold (VELOCITY rules)
+        promptTemplate:
+          type: string
+          description: Custom LLM prompt (LLM_EVALUATOR rules)
+        evaluationIntervalMinutes:
+          type: integer
+          description: How often to run this rule in minutes (LLM_EVALUATOR rules)
+
+    RuleResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        tenantId:
+          type: string
+        eventType:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        ruleType:
+          $ref: '#/components/schemas/RuleType'
+        status:
+          $ref: '#/components/schemas/RuleStatus'
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleCondition'
+        groupByField:
+          type: string
+        timeWindowMinutes:
+          type: integer
+        threshold:
+          type: integer
+        promptTemplate:
+          type: string
+        evaluationIntervalMinutes:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    RuleCondition:
+      type: object
+      properties:
+        field:
+          type: string
+        operator:
+          $ref: '#/components/schemas/ConditionOperator'
+        value:
+          type: string
+
+    RuleType:
+      type: string
+      enum: [CONDITION, VELOCITY, LLM_EVALUATOR]
+
+    RuleStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE]
+
+    ConditionOperator:
+      type: string
+      enum:
+        - EQUALS
+        - NOT_EQUALS
+        - GREATER_THAN
+        - LESS_THAN
+        - GREATER_THAN_OR_EQUAL
+        - LESS_THAN_OR_EQUAL
+        - CONTAINS
+        - IN
+
+    SchemaRequest:
+      type: object
+      required: [eventType, fields]
+      properties:
+        eventType:
+          type: string
+        displayName:
+          type: string
+        description:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemaFieldDefinition'
+
+    SchemaResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        tenantId:
+          type: string
+        eventType:
+          type: string
+        displayName:
+          type: string
+        description:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemaFieldDefinition'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SchemaFieldDefinition:
+      type: object
+      required: [name, type, required]
+      properties:
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/SchemaFieldType'
+        required:
+          type: boolean
+        description:
+          type: string
+
+    SchemaFieldType:
+      type: string
+      enum:
+        - KEYWORD
+        - TEXT
+        - INTEGER
+        - LONG
+        - DOUBLE
+        - BOOLEAN
+        - DATE
+        - IP
+        - GEO_POINT
+
+    Error:
+      type: object
+      properties:
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+
+tags:
+  - name: Events
+    description: Event ingestion and fraud evaluation
+  - name: Search
+    description: Elasticsearch-backed search and aggregations
+  - name: Rules
+    description: Fraud detection rule management (CONDITION, VELOCITY, and LLM_EVALUATOR types)
+  - name: Schemas
+    description: Event schema definitions for validation and Elasticsearch mapping

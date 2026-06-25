@@ -1,6 +1,15 @@
 spring:
   elasticsearch:
     uris: ${SPRING_ELASTICSEARCH_URIS:http://localhost:9200}
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/fraud_platform?createDatabaseIfNotExist=true
+    username: ${MYSQL_USER:fraud}
+    password: ${MYSQL_PASSWORD:fraud}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -30,17 +39,15 @@ fraud:
     log-dir: ${FRAUD_LOG_DIR:logs}
   geoip:
     database-path: ${GEOIP_DB_PATH:}
-  rules:
-    suspicious-ip:
-      blocked-ips:
-        - 10.0.0.1
-      high-risk-countries:
-        - North Korea
-        - Iran
-        - Syria
-
 tenant:
   header-name: X-Tenant-Id
   super-tenant-value: __super__
   excluded-paths:
     - /actuator
+
+llm:
+  provider: ${LLM_PROVIDER:none}
+  base-url: ${LLM_BASE_URL:}
+  api-key: ${LLM_API_KEY:}
+  model: ${LLM_MODEL:gpt-4o-mini}
+  max-tokens: ${LLM_MAX_TOKENS:512}
