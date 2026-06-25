@@ -7,10 +7,12 @@ import { Header } from './components/layout/Header';
 import { DashboardPage } from './pages/DashboardPage';
 import { EventsPage } from './pages/EventsPage';
 import { AlertsPage } from './pages/AlertsPage';
+import { RulesPage } from './pages/RulesPage';
 
 const pageTitles: Record<string, string> = {
   '/': 'Dashboard',
   '/events': 'Events',
+  '/rules': 'Fraud Rules',
   '/alerts': 'Alerts',
 };
 
@@ -28,6 +30,7 @@ function Layout() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/alerts" element={<AlertsPage />} />
+          <Route path="/rules" element={<RulesPage />} />
           </Routes>
         </main>
       </div>

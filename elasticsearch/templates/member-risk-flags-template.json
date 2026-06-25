@@ -1,0 +1,30 @@
+{
+  "index_patterns": ["member-risk-flags"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 1,
+      "codec": "best_compression"
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "customerId":      { "type": "keyword" },
+        "tenantId":        { "type": "keyword" },
+        "riskLevel":       { "type": "keyword" },
+        "riskScore":       { "type": "integer" },
+        "rulesFired":      { "type": "keyword" },
+        "primaryReason":   { "type": "text", "fields": { "keyword": { "type": "keyword", "ignore_above": 512 }}},
+        "recommendation":  { "type": "keyword" },
+        "sourceEventId":   { "type": "keyword" },
+        "flaggedAt":       { "type": "date" },
+        "lastUpdatedAt":   { "type": "date" },
+        "expiresAt":       { "type": "date" },
+        "status":          { "type": "keyword" },
+        "clearedBy":       { "type": "keyword" },
+        "clearedAt":       { "type": "date" },
+        "clearanceReason": { "type": "text" }
+      }
+    }
+  }
+}
