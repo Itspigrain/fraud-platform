@@ -3,16 +3,24 @@
   "template": {
     "settings": {
       "number_of_shards": 1,
-      "number_of_replicas": 0
+      "number_of_replicas": 0,
+      "index.codec": "best_compression",
+      "default_pipeline": "pipeline-applogs"
     },
     "mappings": {
+      "dynamic": "strict",
       "properties": {
-        "@timestamp":   { "type": "date" },
-        "level":        { "type": "keyword" },
-        "logger_name":  { "type": "keyword" },
-        "message":      { "type": "text" },
-        "thread_name":  { "type": "keyword" },
-        "stack_trace":  { "type": "text" }
+        "@timestamp":    { "type": "date" },
+        "level":         { "type": "keyword" },
+        "level_value":   { "type": "integer" },
+        "logger_name":   { "type": "keyword" },
+        "message":       { "type": "text" },
+        "thread_name":   { "type": "keyword" },
+        "stack_trace":   { "type": "text", "index": false },
+        "tenantId":      { "type": "keyword" },
+        "customerId":    { "type": "keyword" },
+        "correlationId": { "type": "keyword" },
+        "pipeline_error":{ "type": "keyword", "index": false }
       }
     }
   }

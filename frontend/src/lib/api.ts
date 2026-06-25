@@ -10,8 +10,8 @@ import type {
   AlertSearchParams,
 } from './types';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-const TENANT_ID = import.meta.env.VITE_TENANT_ID || 'default';
+const API_BASE = import.meta.env.VITE_API_URL !== undefined ? import.meta.env.VITE_API_URL : '';
+const TENANT_ID = import.meta.env.VITE_TENANT_ID || 'tenant-1';
 
 function buildQuery(params: Record<string, unknown>): string {
   const searchParams = new URLSearchParams();

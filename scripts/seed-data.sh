@@ -11,7 +11,7 @@ post() {
   local label="$1"
   local data="$2"
   printf "  %-50s " "$label"
-  result=$(curl -s -X POST "$API" -H "$CT" -d "$data")
+  result=$(curl -s -X POST "$API" -H "X-Tenant-Id: tenant-1" -H "$CT" -d "$data")
   decision=$(echo "$result" | python3 -c "import sys,json; r=json.load(sys.stdin); print(f'score={r[\"riskScore\"]} decision={r[\"decision\"]} alerts={len(r[\"alerts\"])}')" 2>/dev/null)
   echo "$decision"
 }

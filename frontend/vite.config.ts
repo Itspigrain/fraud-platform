@@ -11,6 +11,21 @@ export default defineConfig({
     },
   },
   server: {
+    host: true,
     port: 3000,
+    proxy: {
+      '/search': {
+        target: 'http://fraud-app:8080',
+        changeOrigin: true,
+      },
+      '/events': {
+        target: 'http://fraud-app:8080',
+        changeOrigin: true,
+      },
+      '/actuator': {
+        target: 'http://fraud-app:8080',
+        changeOrigin: true,
+      },
+    },
   },
 })

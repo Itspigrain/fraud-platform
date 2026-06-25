@@ -1,0 +1,43 @@
+{
+  "description": "Fraud events: GeoIP enrichment, timestamp normalisation, field promotion. Threat intel enrichment added after sync-ip-feeds.sh runs.",
+  "processors": [
+    {
+      "date": {
+        "field": "eventTime",
+        "target_field": "@timestamp",
+        "formats": ["ISO8601"],
+        "ignore_failure": true
+      }
+    },
+    {
+      "geoip": {
+        "field": "sourceIp",
+        "target_field": "geoip",
+        "properties": ["country_name", "city_name", "region_name", "location"],
+        "ignore_missing": true,
+        "ignore_failure": true
+      }
+    },
+    {
+      "script": {
+        "lang": "painless",
+        "source": "if (ctx.attributes != null) { if (ctx.attributes.amount != null) ctx.amount = ctx.attributes.amount; if (ctx.attributes.merchant != null) ctx.merchant = ctx.attributes.merchant; if (ctx.attributes.category != null) ctx.category = ctx.attributes.category; }",
+        "ignore_failure": true
+      }
+    },
+    {
+      "remove": {
+        "field": ["host", "log", "agent", "ecs", "input", "@version"],
+        "ignore_missing": true
+      }
+    }
+  ],
+  "on_failure": [
+    {
+      "set": {
+        "field": "pipeline_error",
+        "value": "events-pipeline: {{_ingest.on_failure_processor_type}} - {{_ingest.on_failure_message}}"
+      }
+    }
+  ]
+}

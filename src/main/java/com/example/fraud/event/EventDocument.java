@@ -2,6 +2,8 @@ package com.example.fraud.event;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 import java.time.Instant;
 import java.util.Map;
 
@@ -15,7 +17,7 @@ public record EventDocument(
     String deviceId,
     String email,
     String phoneNumber,
-    Instant eventTime,
+    @Field(type = FieldType.Date) Instant eventTime,
     Map<String, Object> attributes,
     int riskScore
 ) {
