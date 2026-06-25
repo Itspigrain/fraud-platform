@@ -602,10 +602,16 @@ components:
           description: Field to group by (VELOCITY rules)
         timeWindowMinutes:
           type: integer
-          description: Time window in minutes (VELOCITY rules)
+          description: Time window in minutes (VELOCITY and LLM_EVALUATOR rules)
         threshold:
           type: integer
           description: Count threshold (VELOCITY rules)
+        promptTemplate:
+          type: string
+          description: Custom LLM prompt (LLM_EVALUATOR rules)
+        evaluationIntervalMinutes:
+          type: integer
+          description: How often to run this rule in minutes (LLM_EVALUATOR rules)
 
     RuleResponse:
       type: object
@@ -635,6 +641,10 @@ components:
           type: integer
         threshold:
           type: integer
+        promptTemplate:
+          type: string
+        evaluationIntervalMinutes:
+          type: integer
         createdAt:
           type: string
           format: date-time
@@ -654,7 +664,7 @@ components:
 
     RuleType:
       type: string
-      enum: [CONDITION, VELOCITY]
+      enum: [CONDITION, VELOCITY, LLM_EVALUATOR]
 
     RuleStatus:
       type: string

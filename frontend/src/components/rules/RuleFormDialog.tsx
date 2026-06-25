@@ -22,6 +22,8 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
   const [groupByField, setGroupByField] = useState('');
   const [timeWindowMinutes, setTimeWindowMinutes] = useState(10);
   const [threshold, setThreshold] = useState(5);
+  const [promptTemplate, setPromptTemplate] = useState('');
+  const [evaluationIntervalMinutes, setEvaluationIntervalMinutes] = useState(5);
 
   useEffect(() => {
     if (rule) {
@@ -33,6 +35,8 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
       setGroupByField(rule.groupByField || '');
       setTimeWindowMinutes(rule.timeWindowMinutes || 10);
       setThreshold(rule.threshold || 5);
+      setPromptTemplate(rule.promptTemplate || '');
+      setEvaluationIntervalMinutes(rule.evaluationIntervalMinutes || 5);
     }
   }, [rule]);
 
@@ -48,10 +52,14 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
 
     if (ruleType === 'CONDITION') {
       request.conditions = conditions;
-    } else {
+    } else if (ruleType === 'VELOCITY') {
       request.groupByField = groupByField;
       request.timeWindowMinutes = timeWindowMinutes;
       request.threshold = threshold;
+    } else {
+      request.promptTemplate = promptTemplate;
+      request.timeWindowMinutes = timeWindowMinutes;
+      request.evaluationIntervalMinutes = evaluationIntervalMinutes;
     }
 
     onSave(request);
@@ -59,7 +67,12 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
 
   const isConditionValid = conditions.length > 0 && conditions.every(c => c.field.trim() && c.value.trim());
   const isVelocityValid = groupByField.trim() && timeWindowMinutes > 0 && threshold > 0;
-  const isValid = eventType.trim() && name.trim() && (ruleType === 'CONDITION' ? isConditionValid : isVelocityValid);
+  const isLlmValid = promptTemplate.trim() && timeWindowMinutes > 0 && evaluationIntervalMinutes > 0;
+  const isValid = eventType.trim() && name.trim() && (
+    ruleType === 'CONDITION' ? isConditionValid :
+    ruleType === 'VELOCITY' ? isVelocityValid :
+    isLlmValid
+  );
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -125,12 +138,23 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
                 >
                   Velocity
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setRuleType('LLM_EVALUATOR')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium border transition-colors ${
+                    ruleType === 'LLM_EVALUATOR'
+                      ? 'bg-slate-900 text-white border-slate-900'
+                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  LLM Evaluator
+                </button>
               </div>
             </div>
 
             {ruleType === 'CONDITION' ? (
               <ConditionBuilder conditions={conditions} onChange={setConditions} />
-            ) : (
+            ) : ruleType === 'VELOCITY' ? (
               <div className="space-y-3 rounded-lg border border-slate-200 p-4">
                 <p className="text-sm text-slate-500">
                   Fire when the number of events grouped by a field exceeds a threshold within a time window.
@@ -162,6 +186,44 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
                       min={1}
                       value={threshold}
                       onChange={(e) => setThreshold(Number(e.target.value))}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3 rounded-lg border border-slate-200 p-4">
+                <p className="text-sm text-slate-500">
+                  Runs on a schedule, fetches recent events, and sends them to an LLM for fraud pattern analysis.
+                </p>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Prompt Template</label>
+                  <textarea
+                    value={promptTemplate}
+                    onChange={(e) => setPromptTemplate(e.target.value)}
+                    placeholder="e.g. Analyze these purchase events for card-testing patterns..."
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm min-h-[100px]"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Time Window (minutes)</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={timeWindowMinutes}
+                      onChange={(e) => setTimeWindowMinutes(Number(e.target.value))}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Evaluation Interval (minutes)</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={evaluationIntervalMinutes}
+                      onChange={(e) => setEvaluationIntervalMinutes(Number(e.target.value))}
                       className="mt-1"
                     />
                   </div>

@@ -106,7 +106,7 @@ export type ConditionOperator =
   | 'IN';
 
 export type RuleStatus = 'ACTIVE' | 'INACTIVE';
-export type RuleType = 'CONDITION' | 'VELOCITY';
+export type RuleType = 'CONDITION' | 'VELOCITY' | 'LLM_EVALUATOR';
 
 export interface RuleResponse {
   id: number;
@@ -120,6 +120,8 @@ export interface RuleResponse {
   groupByField: string | null;
   timeWindowMinutes: number | null;
   threshold: number | null;
+  promptTemplate: string | null;
+  evaluationIntervalMinutes: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -134,6 +136,8 @@ export interface RuleRequest {
   groupByField?: string;
   timeWindowMinutes?: number;
   threshold?: number;
+  promptTemplate?: string;
+  evaluationIntervalMinutes?: number;
 }
 
 export interface AlertSearchParams {
