@@ -2,5 +2,6 @@ package com.example.fraud.rule;
 
 public enum RuleType {
     CONDITION,
-    VELOCITY
+    VELOCITY,
+    LLM_EVALUATOR
 }

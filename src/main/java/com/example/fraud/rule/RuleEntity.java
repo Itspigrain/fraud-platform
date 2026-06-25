@@ -52,6 +52,11 @@ public class RuleEntity {
 
     private Integer threshold;
 
+    @Column(columnDefinition = "TEXT")
+    private String promptTemplate;
+
+    private Integer evaluationIntervalMinutes;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 

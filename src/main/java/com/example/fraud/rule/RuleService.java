@@ -33,6 +33,11 @@ public class RuleService {
 
         if (entity.getRuleType() == RuleType.CONDITION) {
             entity.setConditionsFromList(request.conditions());
+        } else if (entity.getRuleType() == RuleType.LLM_EVALUATOR) {
+            entity.setConditions("[]");
+            entity.setPromptTemplate(request.promptTemplate());
+            entity.setTimeWindowMinutes(request.timeWindowMinutes());
+            entity.setEvaluationIntervalMinutes(request.evaluationIntervalMinutes());
         } else {
             entity.setConditions("[]");
             entity.setGroupByField(request.groupByField());
@@ -71,6 +76,8 @@ public class RuleService {
         if (request.groupByField() != null) entity.setGroupByField(request.groupByField());
         if (request.timeWindowMinutes() != null) entity.setTimeWindowMinutes(request.timeWindowMinutes());
         if (request.threshold() != null) entity.setThreshold(request.threshold());
+        if (request.promptTemplate() != null) entity.setPromptTemplate(request.promptTemplate());
+        if (request.evaluationIntervalMinutes() != null) entity.setEvaluationIntervalMinutes(request.evaluationIntervalMinutes());
 
         entity = ruleRepository.save(entity);
         invalidateCache(tenantId);

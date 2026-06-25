@@ -11,5 +11,7 @@ public record RuleRequest(
     List<RuleCondition> conditions,
     String groupByField,
     Integer timeWindowMinutes,
-    Integer threshold
+    Integer threshold,
+    String promptTemplate,
+    Integer evaluationIntervalMinutes
 ) {}

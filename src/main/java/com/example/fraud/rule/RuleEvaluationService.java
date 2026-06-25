@@ -33,6 +33,7 @@ public class RuleEvaluationService {
         return switch (rule.getRuleType()) {
             case CONDITION -> matchesConditionRule(event, rule);
             case VELOCITY -> matchesVelocityRule(event, rule);
+            case LLM_EVALUATOR -> false;
         };
     }
 

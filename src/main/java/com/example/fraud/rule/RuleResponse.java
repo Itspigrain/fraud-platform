@@ -15,6 +15,8 @@ public record RuleResponse(
     String groupByField,
     Integer timeWindowMinutes,
     Integer threshold,
+    String promptTemplate,
+    Integer evaluationIntervalMinutes,
     Instant createdAt,
     Instant updatedAt
 ) {
@@ -34,6 +36,8 @@ public record RuleResponse(
             entity.getGroupByField(),
             entity.getTimeWindowMinutes(),
             entity.getThreshold(),
+            entity.getPromptTemplate(),
+            entity.getEvaluationIntervalMinutes(),
             entity.getCreatedAt(),
             entity.getUpdatedAt()
         );
