@@ -88,8 +88,7 @@ public class RuleService {
 
     public void delete(String tenantId, Long ruleId, boolean deleteIndex) {
         RuleEntity entity = findByIdAndTenant(tenantId, ruleId);
-        entity.setStatus(RuleStatus.INACTIVE);
-        ruleRepository.save(entity);
+        ruleRepository.delete(entity);
 
         if (deleteIndex) {
             indexService.deleteIndex(tenantId, ruleId);
