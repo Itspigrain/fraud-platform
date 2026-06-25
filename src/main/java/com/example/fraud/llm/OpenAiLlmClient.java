@@ -23,10 +23,12 @@ public class OpenAiLlmClient implements LlmClient {
     public OpenAiLlmClient(LlmProperties properties, ObjectMapper mapper) {
         this.properties = properties;
         this.mapper = mapper;
-        this.restClient = RestClient.builder()
-            .baseUrl("https://api.openai.com/v1")
-            .defaultHeader("Authorization", "Bearer " + properties.apiKey())
-            .build();
+        String baseUrl = properties.baseUrl() != null ? properties.baseUrl() : "https://api.openai.com/v1";
+        var builder = RestClient.builder().baseUrl(baseUrl);
+        if (properties.apiKey() != null && !properties.apiKey().isBlank()) {
+            builder.defaultHeader("Authorization", "Bearer " + properties.apiKey());
+        }
+        this.restClient = builder.build();
     }
 
     @Override
@@ -53,6 +55,7 @@ public class OpenAiLlmClient implements LlmClient {
 
             JsonNode root = mapper.readTree(responseJson);
             String content = root.at("/choices/0/message/content").asText();
+            log.debug("Raw LLM response: {}", content);
 
             return parseVerdict(content, mapper);
         } catch (Exception e) {

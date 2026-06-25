@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -65,6 +65,30 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
     onSave(request);
   };
 
+  const [size, setSize] = useState({ width: 672, height: 600 });
+  const resizing = useRef(false);
+  const startPos = useRef({ x: 0, y: 0, w: 0, h: 0 });
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    resizing.current = true;
+    startPos.current = { x: e.clientX, y: e.clientY, w: size.width, h: size.height };
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!resizing.current) return;
+      setSize({
+        width: Math.max(400, startPos.current.w + (ev.clientX - startPos.current.x)),
+        height: Math.max(300, startPos.current.h + (ev.clientY - startPos.current.y)),
+      });
+    };
+    const onMouseUp = () => {
+      resizing.current = false;
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }, [size]);
+
   const isConditionValid = conditions.length > 0 && conditions.every(c => c.field.trim() && c.value.trim());
   const isVelocityValid = groupByField.trim() && timeWindowMinutes > 0 && threshold > 0;
   const isLlmValid = promptTemplate.trim() && timeWindowMinutes > 0 && evaluationIntervalMinutes > 0;
@@ -76,7 +100,7 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-auto">
+      <Card className="relative overflow-auto" style={{ width: size.width, height: size.height }}>
         <CardHeader>
           <CardTitle>{rule ? 'Edit Rule' : 'Create Rule'}</CardTitle>
         </CardHeader>
@@ -209,6 +233,7 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-slate-700">Time Window (minutes)</label>
+                    <p className="text-xs text-slate-400 mt-0.5">How far back to fetch events for each evaluation</p>
                     <Input
                       type="number"
                       min={1}
@@ -219,6 +244,7 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
                   </div>
                   <div>
                     <label className="text-sm font-medium text-slate-700">Evaluation Interval (minutes)</label>
+                    <p className="text-xs text-slate-400 mt-0.5">How often the LLM re-evaluates the event batch</p>
                     <Input
                       type="number"
                       min={1}
@@ -241,6 +267,14 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
             </div>
           </form>
         </CardContent>
+        <div
+          onMouseDown={onMouseDown}
+          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
+          style={{
+            background: 'linear-gradient(135deg, transparent 50%, #94a3b8 50%)',
+            borderRadius: '0 0 var(--radius) 0',
+          }}
+        />
       </Card>
     </div>
   );

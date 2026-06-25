@@ -766,6 +766,6 @@ tags:
   - name: Search
     description: Elasticsearch-backed search and aggregations
   - name: Rules
-    description: Fraud detection rule management (CONDITION and VELOCITY types)
+    description: Fraud detection rule management (CONDITION, VELOCITY, and LLM_EVALUATOR types)
   - name: Schemas
     description: Event schema definitions for validation and Elasticsearch mapping

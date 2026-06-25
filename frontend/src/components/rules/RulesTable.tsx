@@ -46,7 +46,7 @@ export function RulesTable({ rules, onEdit, onDelete, onToggleStatus, onViewResu
             </TableCell>
             <TableCell>
               <Badge variant="secondary">
-                {rule.ruleType === 'VELOCITY' ? 'Velocity' : 'Condition'}
+                {rule.ruleType === 'VELOCITY' ? 'Velocity' : rule.ruleType === 'LLM_EVALUATOR' ? 'LLM Evaluator' : 'Condition'}
               </Badge>
             </TableCell>
             <TableCell>
@@ -61,6 +61,8 @@ export function RulesTable({ rules, onEdit, onDelete, onToggleStatus, onViewResu
             <TableCell className="text-sm text-slate-600">
               {rule.ruleType === 'VELOCITY' ? (
                 <span>{rule.groupByField} &gt; {rule.threshold} / {rule.timeWindowMinutes}m</span>
+              ) : rule.ruleType === 'LLM_EVALUATOR' ? (
+                <span>every {rule.evaluationIntervalMinutes}m / {rule.timeWindowMinutes}m window</span>
               ) : (
                 <span>{rule.conditions.length} condition{rule.conditions.length !== 1 ? 's' : ''}</span>
               )}
