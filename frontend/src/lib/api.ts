@@ -15,7 +15,12 @@ import type {
 } from './types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-const TENANT_ID = import.meta.env.VITE_TENANT_ID || 'default';
+
+let _tenantId = import.meta.env.VITE_TENANT_ID || 'default';
+
+export function setApiTenantId(tenantId: string) {
+  _tenantId = tenantId;
+}
 
 function buildQuery(params: Record<string, unknown>): string {
   const searchParams = new URLSearchParams();
@@ -32,7 +37,7 @@ async function fetchJson<T>(path: string, params: Record<string, unknown> = {}):
   const url = `${API_BASE}${path}${query ? `?${query}` : ''}`;
   const res = await fetch(url, {
     headers: {
-      'X-Tenant-Id': TENANT_ID,
+      'X-Tenant-Id': _tenantId,
     },
   });
   if (!res.ok) {
@@ -47,7 +52,7 @@ async function mutateJson<T>(path: string, method: string, body?: unknown): Prom
     method,
     headers: {
       'Content-Type': 'application/json',
-      'X-Tenant-Id': TENANT_ID,
+      'X-Tenant-Id': _tenantId,
     },
     body: body ? JSON.stringify(body) : undefined,
   });
