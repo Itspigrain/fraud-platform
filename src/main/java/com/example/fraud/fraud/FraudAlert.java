@@ -6,10 +6,8 @@ public record FraudAlert(
     String alertId,
     String tenantId,
     String eventId,
-    String customerId,
     String ruleId,
     String severity,
-    int riskScore,
     String reason,
     Instant detectedAt
 ) {}

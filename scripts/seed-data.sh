@@ -1,104 +1,106 @@
 #!/bin/bash
 set -e
 
-API="http://localhost:8080/events"
+BASE="http://localhost:8080"
 CT="Content-Type: application/json"
 
-echo "=== Seeding fraud platform with test data ==="
+echo "=== Seeding generic event platform with test data ==="
 echo ""
 
 post() {
-  local label="$1"
-  local data="$2"
+  local endpoint="$1"
+  local tenant="$2"
+  local label="$3"
+  local data="$4"
   printf "  %-50s " "$label"
-  result=$(curl -s -X POST "$API" -H "$CT" -d "$data")
-  decision=$(echo "$result" | python3 -c "import sys,json; r=json.load(sys.stdin); print(f'score={r[\"riskScore\"]} decision={r[\"decision\"]} alerts={len(r[\"alerts\"])}')" 2>/dev/null)
-  echo "$decision"
+  result=$(curl -s -w "\n%{http_code}" -X POST "$BASE$endpoint" \
+    -H "$CT" -H "X-Tenant-Id: $tenant" -d "$data")
+  http_code=$(echo "$result" | tail -1)
+  body=$(echo "$result" | head -1)
+  if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
+    echo "OK ($http_code)"
+  else
+    echo "FAIL ($http_code): $body"
+  fi
 }
 
-# --- Normal transactions (should ALLOW) ---
-echo "[1/6] Normal transactions"
-post "Small purchase - Alice" \
-  '{"tenantId":"tenant-1","eventType":"purchase","customerId":"cust-alice-001","sourceIp":"72.14.200.10","deviceId":"dev-alice-mac","email":"alice@example.com","phoneNumber":"+14155551001","attributes":{"amount":49.99,"merchant":"Amazon","category":"electronics"}}'
+# --- Step 1: Create schemas ---
+echo "[1/4] Creating schemas"
 
-post "Medium purchase - Bob" \
-  '{"tenantId":"tenant-1","eventType":"purchase","customerId":"cust-bob-002","sourceIp":"98.45.12.30","deviceId":"dev-bob-iphone","email":"bob@example.com","phoneNumber":"+14155551002","attributes":{"amount":250.00,"merchant":"BestBuy","category":"electronics"}}'
+post "/schemas" "tenant-ecommerce" "E-commerce: purchase schema" \
+  '{"eventType":"purchase","displayName":"Purchase Event","description":"E-commerce purchase","fields":[{"name":"customerId","type":"KEYWORD","required":true,"description":"Customer ID"},{"name":"amount","type":"DOUBLE","required":true,"description":"Purchase amount"},{"name":"currency","type":"KEYWORD","required":false,"description":"Currency code"},{"name":"merchant","type":"KEYWORD","required":false,"description":"Merchant name"},{"name":"category","type":"KEYWORD","required":false,"description":"Product category"},{"name":"sourceIp","type":"IP","required":false,"description":"Source IP address"}]}'
 
-post "Login - Charlie" \
-  '{"tenantId":"tenant-1","eventType":"login","customerId":"cust-charlie-003","sourceIp":"104.16.85.20","deviceId":"dev-charlie-win","email":"charlie@example.com","phoneNumber":"+14155551003","attributes":{}}'
+post "/schemas" "tenant-ecommerce" "E-commerce: login schema" \
+  '{"eventType":"login","displayName":"Login Event","description":"User login","fields":[{"name":"customerId","type":"KEYWORD","required":true,"description":"Customer ID"},{"name":"sourceIp","type":"IP","required":false,"description":"Source IP"},{"name":"deviceId","type":"KEYWORD","required":false,"description":"Device ID"},{"name":"email","type":"KEYWORD","required":false,"description":"Email address"}]}'
 
-post "Payment - Diana" \
-  '{"tenantId":"tenant-2","eventType":"payment","customerId":"cust-diana-004","sourceIp":"151.101.1.140","deviceId":"dev-diana-android","email":"diana@example.com","phoneNumber":"+14155551004","attributes":{"amount":1200.00,"merchant":"Stripe","category":"subscription"}}'
+post "/schemas" "tenant-banking" "Banking: transfer schema" \
+  '{"eventType":"transfer","displayName":"Transfer Event","description":"Bank transfer","fields":[{"name":"accountId","type":"KEYWORD","required":true,"description":"Source account"},{"name":"recipientAccount","type":"KEYWORD","required":true,"description":"Recipient account"},{"name":"amount","type":"DOUBLE","required":true,"description":"Transfer amount"},{"name":"currency","type":"KEYWORD","required":false,"description":"Currency code"},{"name":"bank","type":"KEYWORD","required":false,"description":"Recipient bank"}]}'
 
-post "Transfer - Edward" \
-  '{"tenantId":"tenant-1","eventType":"transfer","customerId":"cust-edward-005","sourceIp":"172.217.14.110","deviceId":"dev-edward-mac","email":"edward@example.com","phoneNumber":"+14155551005","attributes":{"amount":500.00,"recipient":"acct-9876","bank":"Chase"}}'
+post "/schemas" "tenant-banking" "Banking: withdrawal schema" \
+  '{"eventType":"withdrawal","displayName":"Withdrawal Event","description":"ATM or counter withdrawal","fields":[{"name":"accountId","type":"KEYWORD","required":true,"description":"Account ID"},{"name":"amount","type":"DOUBLE","required":true,"description":"Withdrawal amount"},{"name":"method","type":"KEYWORD","required":false,"description":"Withdrawal method"},{"name":"location","type":"GEO_POINT","required":false,"description":"ATM location"}]}'
 
 echo ""
 
-# --- High-value transactions (should trigger HIGH_VALUE rule) ---
-echo "[2/6] High-value transactions (amount > \$10,000)"
-post "Large wire transfer - Frank" \
-  '{"tenantId":"tenant-1","eventType":"transfer","customerId":"cust-frank-006","sourceIp":"73.222.15.44","deviceId":"dev-frank-win","email":"frank@example.com","phoneNumber":"+14155551006","attributes":{"amount":25000.00,"recipient":"acct-offshore-1","bank":"HSBC"}}'
+# --- Step 2: Create rules ---
+echo "[2/4] Creating rules"
 
-post "Big purchase - Grace" \
-  '{"tenantId":"tenant-2","eventType":"purchase","customerId":"cust-grace-007","sourceIp":"64.233.160.100","deviceId":"dev-grace-ipad","email":"grace@example.com","phoneNumber":"+14155551007","attributes":{"amount":15000.00,"merchant":"Rolex","category":"luxury"}}'
+post "/api/rules" "tenant-ecommerce" "Rule: high-value purchase" \
+  '{"eventType":"purchase","name":"High Value Purchase","description":"Flag purchases over $10,000","ruleType":"CONDITION","conditions":[{"field":"amount","operator":"GREATER_THAN","value":"10000"}]}'
 
-post "Huge payment - Henry" \
-  '{"tenantId":"tenant-1","eventType":"payment","customerId":"cust-henry-008","sourceIp":"208.67.222.222","deviceId":"dev-henry-mac","email":"henry@example.com","phoneNumber":"+14155551008","attributes":{"amount":50000.00,"merchant":"RealEstateCo","category":"property"}}'
+post "/api/rules" "tenant-ecommerce" "Rule: purchase velocity" \
+  '{"eventType":"purchase","name":"Purchase Velocity","description":"Flag >5 purchases in 10 minutes","ruleType":"VELOCITY","groupByField":"customerId","timeWindowMinutes":10,"threshold":5}'
+
+post "/api/rules" "tenant-banking" "Rule: large transfer" \
+  '{"eventType":"transfer","name":"Large Transfer","description":"Flag transfers over $25,000","ruleType":"CONDITION","conditions":[{"field":"amount","operator":"GREATER_THAN","value":"25000"}]}'
 
 echo ""
 
-# --- Velocity abuse (>5 events in 10 min for same customer) ---
-echo "[3/6] Velocity abuse - rapid-fire from same customer"
-for i in $(seq 1 8); do
-  post "Rapid txn #$i - Ivan" \
-    "{\"tenantId\":\"tenant-1\",\"eventType\":\"purchase\",\"customerId\":\"cust-ivan-009\",\"sourceIp\":\"45.33.32.156\",\"deviceId\":\"dev-ivan-bot\",\"email\":\"ivan@example.com\",\"phoneNumber\":\"+14155551009\",\"attributes\":{\"amount\":$((RANDOM % 500 + 10)).99,\"merchant\":\"Store$i\",\"category\":\"retail\"}}"
+# --- Step 3: Send events ---
+echo "[3/4] Sending events"
+
+# E-commerce - normal purchases
+post "/events" "tenant-ecommerce" "Small purchase - Alice" \
+  '{"eventType":"purchase","attributes":{"customerId":"cust-alice-001","amount":49.99,"currency":"USD","merchant":"Amazon","category":"electronics","sourceIp":"72.14.200.10"}}'
+
+post "/events" "tenant-ecommerce" "Medium purchase - Bob" \
+  '{"eventType":"purchase","attributes":{"customerId":"cust-bob-002","amount":250.00,"currency":"USD","merchant":"BestBuy","category":"electronics","sourceIp":"98.45.12.30"}}'
+
+post "/events" "tenant-ecommerce" "Login - Charlie" \
+  '{"eventType":"login","attributes":{"customerId":"cust-charlie-003","sourceIp":"104.16.85.20","deviceId":"dev-charlie-win","email":"charlie@example.com"}}'
+
+# E-commerce - high value (should trigger rule)
+post "/events" "tenant-ecommerce" "High-value purchase - Grace" \
+  '{"eventType":"purchase","attributes":{"customerId":"cust-grace-007","amount":15000.00,"currency":"USD","merchant":"Rolex","category":"luxury","sourceIp":"64.233.160.100"}}'
+
+# E-commerce - velocity (rapid purchases)
+for i in $(seq 1 7); do
+  post "/events" "tenant-ecommerce" "Rapid purchase #$i - Ivan" \
+    "{\"eventType\":\"purchase\",\"attributes\":{\"customerId\":\"cust-ivan-009\",\"amount\":$((RANDOM % 500 + 10)).99,\"currency\":\"USD\",\"merchant\":\"Store$i\",\"category\":\"retail\",\"sourceIp\":\"45.33.32.156\"}}"
 done
 
-echo ""
+# Banking - normal transfers
+post "/events" "tenant-banking" "Normal transfer - Edward" \
+  '{"eventType":"transfer","attributes":{"accountId":"acct-edward-001","recipientAccount":"acct-9876","amount":500.00,"currency":"USD","bank":"Chase"}}'
 
-# --- Mixed scenarios ---
-echo "[4/6] Multiple event types from various tenants"
-post "Account creation - Julia" \
-  '{"tenantId":"tenant-3","eventType":"account_creation","customerId":"cust-julia-010","sourceIp":"93.184.216.34","deviceId":"dev-julia-chrome","email":"julia@newaccount.com","phoneNumber":"+44207946001","attributes":{"referralCode":"REF123","signupMethod":"email"}}'
+post "/events" "tenant-banking" "Withdrawal - Laura" \
+  '{"eventType":"withdrawal","attributes":{"accountId":"acct-laura-002","amount":3000.00,"method":"ATM"}}'
 
-post "Password change - Kevin" \
-  '{"tenantId":"tenant-1","eventType":"password_change","customerId":"cust-kevin-011","sourceIp":"198.51.100.50","deviceId":"dev-kevin-firefox","email":"kevin@example.com","phoneNumber":"+14155551011","attributes":{}}'
-
-post "Withdrawal - Laura" \
-  '{"tenantId":"tenant-2","eventType":"withdrawal","customerId":"cust-laura-012","sourceIp":"203.0.113.75","deviceId":"dev-laura-app","email":"laura@example.com","phoneNumber":"+14155551012","attributes":{"amount":3000.00,"destination":"bank-acct-5555","method":"ACH"}}'
-
-post "Refund - Mike" \
-  '{"tenantId":"tenant-1","eventType":"refund","customerId":"cust-mike-013","sourceIp":"142.250.185.46","deviceId":"dev-mike-safari","email":"mike@example.com","phoneNumber":"+14155551013","attributes":{"amount":899.99,"originalOrderId":"ord-7890","reason":"defective"}}'
-
-post "Card addition - Nancy" \
-  '{"tenantId":"tenant-2","eventType":"card_added","customerId":"cust-nancy-014","sourceIp":"151.101.65.140","deviceId":"dev-nancy-android","email":"nancy@example.com","phoneNumber":"+14155551014","attributes":{"cardType":"visa","lastFour":"4242"}}'
+# Banking - large transfer (should trigger rule)
+post "/events" "tenant-banking" "Large transfer - Frank" \
+  '{"eventType":"transfer","attributes":{"accountId":"acct-frank-003","recipientAccount":"acct-offshore-1","amount":50000.00,"currency":"USD","bank":"HSBC"}}'
 
 echo ""
 
-# --- High-value + velocity combo ---
-echo "[5/6] Combined triggers - high value with velocity"
-for i in $(seq 1 6); do
-  post "Rapid high-value #$i - Oscar" \
-    "{\"tenantId\":\"tenant-1\",\"eventType\":\"purchase\",\"customerId\":\"cust-oscar-015\",\"sourceIp\":\"185.199.108.153\",\"deviceId\":\"dev-oscar-bot\",\"email\":\"oscar@suspicious.com\",\"phoneNumber\":\"+14155551015\",\"attributes\":{\"amount\":$((12000 + RANDOM % 8000)).00,\"merchant\":\"Crypto Exchange $i\",\"category\":\"crypto\"}}"
+# --- Step 4: Summary ---
+echo "[4/4] Checking index counts:"
+for tenant in tenant-ecommerce tenant-banking; do
+  count=$(curl -s "http://localhost:9200/events-${tenant}/_count" 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('count','N/A'))" 2>/dev/null || echo "N/A")
+  printf "  %-30s %s documents\n" "events-${tenant}" "$count"
 done
-
-echo ""
-
-# --- Legitimate high-frequency, low-risk user ---
-echo "[6/6] Legitimate busy user - many small transactions"
-for i in $(seq 1 4); do
-  post "Small purchase #$i - Pam" \
-    "{\"tenantId\":\"tenant-1\",\"eventType\":\"purchase\",\"customerId\":\"cust-pam-016\",\"sourceIp\":\"72.14.200.10\",\"deviceId\":\"dev-pam-iphone\",\"email\":\"pam@example.com\",\"phoneNumber\":\"+14155551016\",\"attributes\":{\"amount\":$((RANDOM % 50 + 5)).99,\"merchant\":\"Coffee Shop\",\"category\":\"food\"}}"
+for idx in alerts audit; do
+  count=$(curl -s "http://localhost:9200/${idx}-*/_count" | python3 -c "import sys,json; print(json.load(sys.stdin).get('count',0))" 2>/dev/null)
+  printf "  %-30s %s documents\n" "$idx" "$count"
 done
 
 echo ""
 echo "=== Seeding complete ==="
-echo ""
-
-# Summary
-echo "Checking index counts:"
-for idx in events alerts audit; do
-  count=$(curl -s "http://localhost:9200/${idx}-*/_count" | python3 -c "import sys,json; print(json.load(sys.stdin).get('count',0))" 2>/dev/null)
-  printf "  %-20s %s documents\n" "$idx" "$count"
-done

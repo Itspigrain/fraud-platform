@@ -10,17 +10,6 @@ public record EventDocument(
     @Id String id,
     String tenantId,
     String eventType,
-    String customerId,
-    String sourceIp,
-    String deviceId,
-    String email,
-    String phoneNumber,
     Instant eventTime,
-    Map<String, Object> attributes,
-    int riskScore
-) {
-    public EventDocument withRiskScore(int riskScore) {
-        return new EventDocument(id, tenantId, eventType, customerId, sourceIp,
-            deviceId, email, phoneNumber, eventTime, attributes, riskScore);
-    }
-}
+    Map<String, Object> attributes
+) {}

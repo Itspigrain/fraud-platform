@@ -1,5 +1,3 @@
-// frontend/src/components/alerts/AlertsFilter.tsx
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { AlertSearchParams } from '@/lib/types';
@@ -19,12 +17,12 @@ export function AlertsFilter({ filters, onChange, onSearch, onReset }: AlertsFil
   return (
     <div className="flex flex-wrap gap-3 items-end">
       <div>
-        <label className="text-xs text-slate-500">Customer ID</label>
+        <label className="text-xs text-slate-500">Search</label>
         <Input
-          placeholder="cust-..."
-          value={filters.customerId ?? ''}
-          onChange={(e) => update('customerId', e.target.value)}
-          className="w-40"
+          placeholder="Full-text search..."
+          value={filters.q ?? ''}
+          onChange={(e) => update('q', e.target.value)}
+          className="w-48"
         />
       </div>
       <div>
@@ -43,26 +41,6 @@ export function AlertsFilter({ filters, onChange, onSearch, onReset }: AlertsFil
           value={filters.severity ?? ''}
           onChange={(e) => update('severity', e.target.value)}
           className="w-32"
-        />
-      </div>
-      <div>
-        <label className="text-xs text-slate-500">Risk Min</label>
-        <Input
-          type="number"
-          placeholder="0"
-          value={filters.riskScoreMin ?? ''}
-          onChange={(e) => update('riskScoreMin', e.target.value)}
-          className="w-20"
-        />
-      </div>
-      <div>
-        <label className="text-xs text-slate-500">Risk Max</label>
-        <Input
-          type="number"
-          placeholder="100"
-          value={filters.riskScoreMax ?? ''}
-          onChange={(e) => update('riskScoreMax', e.target.value)}
-          className="w-20"
         />
       </div>
       <Button onClick={onSearch} size="sm">Search</Button>

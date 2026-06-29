@@ -1,5 +1,3 @@
-// frontend/src/components/alerts/AlertsTable.tsx
-
 import { Fragment, useState } from 'react';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -43,17 +41,11 @@ export function AlertsTable({ alerts, page, onPageChange, onSort, sortField, sor
             <TableHead className="cursor-pointer" onClick={() => onSort('detectedAt')}>
               Time{sortIcon('detectedAt')}
             </TableHead>
-            <TableHead className="cursor-pointer" onClick={() => onSort('customerId')}>
-              Customer{sortIcon('customerId')}
-            </TableHead>
             <TableHead className="cursor-pointer" onClick={() => onSort('ruleId')}>
               Rule{sortIcon('ruleId')}
             </TableHead>
             <TableHead className="cursor-pointer" onClick={() => onSort('severity')}>
               Severity{sortIcon('severity')}
-            </TableHead>
-            <TableHead className="cursor-pointer" onClick={() => onSort('riskScore')}>
-              Risk{sortIcon('riskScore')}
             </TableHead>
             <TableHead>Reason</TableHead>
           </TableRow>
@@ -66,19 +58,24 @@ export function AlertsTable({ alerts, page, onPageChange, onSort, sortField, sor
                 onClick={() => setExpandedId(expandedId === a.alertId ? null : a.alertId)}
               >
                 <TableCell className="text-sm">{new Date(a.detectedAt).toLocaleString()}</TableCell>
-                <TableCell className="font-mono text-sm">{a.customerId}</TableCell>
                 <TableCell className="font-mono text-sm">{a.ruleId}</TableCell>
                 <TableCell>{severityBadge(a.severity)}</TableCell>
-                <TableCell>{a.riskScore}</TableCell>
-                <TableCell className="text-sm max-w-xs truncate">{a.reason}</TableCell>
+                <TableCell className="text-sm max-w-md">
+                  <p className="truncate">{a.reason.split(':').slice(0, 1).join(':')}</p>
+                </TableCell>
               </TableRow>
               {expandedId === a.alertId && (
                 <TableRow>
-                  <TableCell colSpan={6} className="bg-slate-50 p-4">
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div><span className="text-slate-500">Alert ID:</span> <span className="font-mono">{a.alertId}</span></div>
-                      <div><span className="text-slate-500">Event ID:</span> <span className="font-mono">{a.eventId}</span></div>
-                      <div><span className="text-slate-500">Reason:</span> {a.reason}</div>
+                  <TableCell colSpan={4} className="bg-slate-50 p-4">
+                    <div className="space-y-3 text-sm">
+                      <div className="flex gap-6">
+                        <div><span className="text-slate-500">Alert ID:</span> <span className="font-mono">{a.alertId}</span></div>
+                        <div><span className="text-slate-500">Event ID:</span> <span className="font-mono">{a.eventId}</span></div>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Reason:</span>
+                        <p className="mt-1 whitespace-pre-wrap text-slate-800 leading-relaxed">{a.reason}</p>
+                      </div>
                     </div>
                   </TableCell>
                 </TableRow>

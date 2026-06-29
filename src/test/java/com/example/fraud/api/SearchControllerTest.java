@@ -32,15 +32,13 @@ class SearchControllerTest {
 
     @Test
     void searchEventsDelegatesToService() {
-        var doc = new EventDocument("e1", "t1", "LOGIN", "c1", "1.2.3.4",
-            "d1", "a@b.com", "555", Instant.parse("2026-06-16T12:00:00Z"),
-            Map.of(), 10);
+        var doc = new EventDocument("e1", "t1", "LOGIN",
+            Instant.parse("2026-06-16T12:00:00Z"), Map.of());
         var expected = new SearchResponse<>(List.of(doc),
             new PageInfo(0, 20, 1, 1));
         when(eventSearchService.search(any(EventSearchRequest.class))).thenReturn(expected);
 
         var response = controller.searchEvents(
-            null, null, null, null, null, null,
             null, null, null, null, 0, 20, "eventTime", "desc");
 
         assertThat(response.results()).hasSize(1);
@@ -49,15 +47,15 @@ class SearchControllerTest {
 
     @Test
     void searchAlertsDelegatesToService() {
-        var alert = new AlertDocument("a1", "t1", "e1", "c1", "VELOCITY",
-            "HIGH", 30, "reason", Instant.parse("2026-06-16T12:00:00Z"));
+        var alert = new AlertDocument("a1", "t1", "e1", "VELOCITY",
+            "HIGH", "reason", Instant.parse("2026-06-16T12:00:00Z"));
         var expected = new SearchResponse<>(List.of(alert),
             new PageInfo(0, 20, 1, 1));
         when(alertSearchService.search(any(AlertSearchRequest.class))).thenReturn(expected);
 
         var response = controller.searchAlerts(
-            null, null, null, null, null,
-            null, null, null, null, 0, 20, "detectedAt", "desc");
+            null, null, null, null, null, null,
+            0, 20, "detectedAt", "desc");
 
         assertThat(response.results()).hasSize(1);
         verify(alertSearchService).search(any(AlertSearchRequest.class));
@@ -69,7 +67,6 @@ class SearchControllerTest {
         when(aggregationService.eventStats(any(EventSearchRequest.class))).thenReturn(expected);
 
         var response = controller.eventStats(
-            null, null, null, null, null, null,
             null, null, null, null, 0, 20, "eventTime", "desc");
 
         assertThat(response.aggregations()).containsKey("eventCountByType");
@@ -77,36 +74,9 @@ class SearchControllerTest {
     }
 
     @Test
-    void alertStatsDelegatesToAggregationService() {
-        var expected = new StatsResponse(Map.of("countBySeverity", List.of()));
-        when(aggregationService.alertStats(any(AlertSearchRequest.class))).thenReturn(expected);
-
-        var response = controller.alertStats(
-            null, null, null, null, null,
-            null, null, null, null, 0, 20, "detectedAt", "desc");
-
-        assertThat(response.aggregations()).containsKey("countBySeverity");
-        verify(aggregationService).alertStats(any(AlertSearchRequest.class));
-    }
-
-    @Test
     void searchEventsWithInvalidDateReturns400() {
         assertThrows(ResponseStatusException.class, () ->
-            controller.searchEvents(null, null, null, null, null, null,
-                null, null, "not-a-date", null, 0, 20, "eventTime", "desc"));
-    }
-
-    @Test
-    void searchEventsWithInvalidSortFieldReturns400() {
-        assertThrows(ResponseStatusException.class, () ->
-            controller.searchEvents(null, null, null, null, null, null,
-                null, null, null, null, 0, 20, "invalidField", "desc"));
-    }
-
-    @Test
-    void searchEventsWithRiskScoreOutOfRangeReturns400() {
-        assertThrows(ResponseStatusException.class, () ->
-            controller.searchEvents(null, null, null, null, null, null,
-                150, null, null, null, 0, 20, "eventTime", "desc"));
+            controller.searchEvents(null, null, "not-a-date", null,
+                0, 20, "eventTime", "desc"));
     }
 }
