@@ -1,5 +1,6 @@
 // frontend/src/App.tsx
 
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { Sidebar } from './components/layout/Sidebar';
@@ -10,6 +11,8 @@ import { AlertsPage } from './pages/AlertsPage';
 import { RulesPage } from './pages/RulesPage';
 import { RuleResultsPage } from './pages/RuleResultsPage';
 import { SchemasPage } from './pages/SchemasPage';
+import { TenantProvider, useTenant } from './lib/tenant-context';
+import { setApiTenantId } from './lib/api';
 
 const pageTitles: Record<string, string> = {
   '/': 'Dashboard',
@@ -21,15 +24,20 @@ const pageTitles: Record<string, string> = {
 
 function Layout() {
   const location = useLocation();
+  const { tenantId } = useTenant();
   const title = pageTitles[location.pathname]
     || (location.pathname.startsWith('/rules/') ? 'Rule Results' : 'Fraud Ops');
+
+  useEffect(() => {
+    setApiTenantId(tenantId);
+  }, [tenantId]);
 
   return (
     <div className="flex h-screen bg-slate-50">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header title={title} />
-        <main className="flex-1 overflow-auto">
+        <main key={tenantId} className="flex-1 overflow-auto">
           <Routes>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/schemas" element={<SchemasPage />} />
@@ -48,7 +56,9 @@ function Layout() {
 export default function App() {
   return (
     <BrowserRouter>
-      <Layout />
+      <TenantProvider>
+        <Layout />
+      </TenantProvider>
     </BrowserRouter>
   );
 }

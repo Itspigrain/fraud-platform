@@ -44,6 +44,7 @@ tenant:
   super-tenant-value: __super__
   excluded-paths:
     - /actuator
+    - /api/tenants
 
 llm:
   provider: ${LLM_PROVIDER:none}
