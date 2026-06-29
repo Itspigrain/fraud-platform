@@ -2,6 +2,8 @@ package com.example.fraud.fraud;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 import java.time.Instant;
 
 @Document(indexName = "alerts", createIndex = false)
@@ -14,5 +16,5 @@ public record AlertDocument(
     String severity,
     int riskScore,
     String reason,
-    Instant detectedAt
+    @Field(type = FieldType.Date) Instant detectedAt
 ) {}

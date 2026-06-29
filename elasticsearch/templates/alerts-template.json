@@ -6,19 +6,47 @@
     },
     "settings": {
       "number_of_shards": 1,
-      "number_of_replicas": 0
+      "number_of_replicas": 0,
+      "index.mapping.total_fields.limit": 100,
+      "index.codec": "best_compression",
+      "index.lifecycle.name": "fraud-alerts-policy",
+      "index.lifecycle.rollover_alias": "alerts",
+      "default_pipeline": "pipeline-alerts"
     },
     "mappings": {
+      "dynamic": "strict",
       "properties": {
-        "alertId":      { "type": "keyword" },
-        "tenantId":     { "type": "keyword" },
-        "eventId":      { "type": "keyword" },
-        "customerId":   { "type": "keyword" },
-        "ruleId":       { "type": "keyword" },
-        "severity":     { "type": "keyword" },
-        "riskScore":    { "type": "integer" },
-        "reason":       { "type": "text" },
-        "detectedAt":   { "type": "date" }
+        "@timestamp":     { "type": "date" },
+        "alertId":        { "type": "keyword" },
+        "tenantId":       { "type": "keyword" },
+        "eventId":        { "type": "keyword" },
+        "customerId":     { "type": "keyword" },
+        "sourceIp":       { "type": "ip" },
+        "ruleId":         { "type": "keyword" },
+        "severity":       { "type": "keyword" },
+        "riskScore":      { "type": "integer" },
+        "detectedAt":     { "type": "date" },
+        "pipeline_error": { "type": "keyword", "index": false },
+        "reason": {
+          "type": "text",
+          "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } }
+        },
+        "threat": {
+          "properties": {
+            "type":        { "type": "keyword" },
+            "source":      { "type": "keyword" },
+            "score":       { "type": "integer" },
+            "description": { "type": "keyword", "index": false }
+          }
+        },
+        "geoip": {
+          "properties": {
+            "country_name": { "type": "keyword" },
+            "city_name":    { "type": "keyword" },
+            "region_name":  { "type": "keyword" },
+            "location":     { "type": "geo_point" }
+          }
+        }
       }
     }
   }

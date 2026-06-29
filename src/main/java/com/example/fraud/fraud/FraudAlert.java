@@ -1,5 +1,7 @@
 package com.example.fraud.fraud;
 
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 import java.time.Instant;
 
 public record FraudAlert(
@@ -11,5 +13,5 @@ public record FraudAlert(
     String severity,
     int riskScore,
     String reason,
-    Instant detectedAt
+    @Field(type = FieldType.Date) Instant detectedAt
 ) {}

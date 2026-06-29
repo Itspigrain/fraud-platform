@@ -7,6 +7,7 @@ const navItems = [
   { to: '/', label: 'Dashboard', icon: '▦' },
   { to: '/events', label: 'Events', icon: '⚡' },
   { to: '/alerts', label: 'Alerts', icon: '⚠' },
+  { to: '/rules', label: 'Rules', icon: '⚙' },
 ];
 
 export function Sidebar() {
