@@ -17,6 +17,11 @@ public class RuleController {
     private final RuleService ruleService;
     private final RuleResultsSearchService ruleResultsSearchService;
 
+    @PostMapping("/validate")
+    public List<RuleValidationService.ValidationError> validate(@RequestBody RuleRequest request) {
+        return ruleService.validateRule(TenantContext.getTenantId(), request);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public RuleResponse create(@RequestBody RuleRequest request) {

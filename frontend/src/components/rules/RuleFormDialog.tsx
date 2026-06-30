@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConditionBuilder } from './ConditionBuilder';
-import { fetchRules } from '@/lib/api';
-import type { DependencyCondition, RuleCondition, RuleRequest, RuleResponse, RuleType } from '@/lib/types';
+import { fetchRules, validateRule } from '@/lib/api';
+import type { DependencyCondition, RuleCondition, RuleRequest, RuleResponse, RuleType, ValidationError } from '@/lib/types';
 
 interface RuleFormDialogProps {
   rule?: RuleResponse | null;
@@ -30,6 +30,8 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
   const [dependsOn, setDependsOn] = useState<number[]>([]);
   const [dependencyCondition, setDependencyCondition] = useState<DependencyCondition>('ALL');
   const [availableRules, setAvailableRules] = useState<RuleResponse[]>([]);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [validating, setValidating] = useState(false);
 
   useEffect(() => {
     fetchRules().then(setAvailableRules).catch(() => {});
@@ -54,8 +56,7 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
     }
   }, [rule]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const buildRequest = (): RuleRequest => {
     const request: RuleRequest = {
       eventType,
       name,
@@ -80,7 +81,25 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
     request.severity = severity || undefined;
     request.dependsOn = dependsOn.length > 0 ? dependsOn : undefined;
     request.dependencyCondition = dependsOn.length > 0 ? dependencyCondition : undefined;
+    return request;
+  };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const request = buildRequest();
+    setValidating(true);
+    setValidationErrors([]);
+    try {
+      const errors = await validateRule(request);
+      setValidationErrors(errors);
+      if (errors.length > 0) {
+        setValidating(false);
+        return;
+      }
+    } catch {
+      // validation endpoint unavailable — proceed without client-side validation
+    }
+    setValidating(false);
     onSave(request);
   };
 
@@ -353,12 +372,25 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
               </div>
             )}
 
+            {validationErrors.length > 0 && (
+              <div className="rounded-md border border-red-200 bg-red-50 p-3">
+                <p className="text-sm font-medium text-red-800 mb-1">Validation Errors</p>
+                <ul className="text-sm text-red-700 list-disc list-inside space-y-0.5">
+                  {validationErrors.map((err, i) => (
+                    <li key={i}>
+                      <span className="font-medium">{err.field}</span>: {err.message}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={!isValid}>
-                {rule ? 'Update' : 'Create'}
+              <Button type="submit" disabled={!isValid || validating}>
+                {validating ? 'Validating...' : rule ? 'Update' : 'Create'}
               </Button>
             </div>
           </form>

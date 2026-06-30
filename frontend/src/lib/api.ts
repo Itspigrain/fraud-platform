@@ -12,6 +12,7 @@ import type {
   RuleRequest,
   SchemaResponse,
   SchemaRequest,
+  ValidationError,
 } from './types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -106,6 +107,10 @@ export function fetchAlertStats() {
 }
 
 // --- Rules ---
+
+export function validateRule(request: RuleRequest) {
+  return mutateJson<ValidationError[]>('/api/rules/validate', 'POST', request);
+}
 
 export function fetchRules() {
   return fetchJson<RuleResponse[]>('/api/rules');
