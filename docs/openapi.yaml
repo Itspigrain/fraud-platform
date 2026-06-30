@@ -90,6 +90,10 @@ paths:
           in: query
           schema:
             type: string
+        - name: verdict
+          in: query
+          schema:
+            type: string
         - name: eventId
           in: query
           schema:
@@ -492,13 +496,22 @@ components:
           format: uuid
         eventType:
           type: string
-        matchedRules:
+        verdicts:
           type: array
           items:
-            type: string
-        decision:
+            $ref: '#/components/schemas/Verdict'
+
+    Verdict:
+      type: object
+      properties:
+        rule:
           type: string
-          enum: [ALLOW, REVIEW]
+        verdict:
+          type: string
+        severity:
+          type: string
+        reason:
+          type: string
 
     EventDocument:
       type: object
@@ -526,6 +539,8 @@ components:
         eventId:
           type: string
         ruleId:
+          type: string
+        verdict:
           type: string
         severity:
           type: string
@@ -612,6 +627,12 @@ components:
         evaluationIntervalMinutes:
           type: integer
           description: How often to run this rule in minutes (LLM_EVALUATOR rules)
+        verdict:
+          type: string
+          description: Verdict to produce when rule fires (e.g. BLOCK, REVIEW, FLAG)
+        severity:
+          type: string
+          description: Severity level (e.g. CRITICAL, HIGH, MEDIUM, LOW)
 
     RuleResponse:
       type: object
@@ -645,6 +666,12 @@ components:
           type: string
         evaluationIntervalMinutes:
           type: integer
+        verdict:
+          type: string
+          description: Verdict to produce when rule fires (e.g. BLOCK, REVIEW, FLAG)
+        severity:
+          type: string
+          description: Severity level (e.g. CRITICAL, HIGH, MEDIUM, LOW)
         createdAt:
           type: string
           format: date-time
