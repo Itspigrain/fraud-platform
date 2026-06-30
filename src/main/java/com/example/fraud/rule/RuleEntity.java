@@ -43,6 +43,10 @@ public class RuleEntity {
     @Column(nullable = false)
     private RuleStatus status = RuleStatus.ACTIVE;
 
+    private String verdict;
+
+    private String severity;
+
     @Column(columnDefinition = "JSON")
     private String conditions;
 
