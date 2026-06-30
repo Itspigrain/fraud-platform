@@ -108,6 +108,7 @@ export type ConditionOperator =
 
 export type RuleStatus = 'ACTIVE' | 'INACTIVE';
 export type RuleType = 'CONDITION' | 'VELOCITY' | 'LLM_EVALUATOR';
+export type DependencyCondition = 'ALL' | 'ANY';
 
 export interface RuleResponse {
   id: number;
@@ -125,6 +126,8 @@ export interface RuleResponse {
   evaluationIntervalMinutes: number | null;
   verdict: string | null;
   severity: string | null;
+  dependsOn: number[] | null;
+  dependencyCondition: DependencyCondition | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -143,6 +146,8 @@ export interface RuleRequest {
   evaluationIntervalMinutes?: number;
   verdict?: string;
   severity?: string;
+  dependsOn?: number[];
+  dependencyCondition?: DependencyCondition;
 }
 
 export interface AlertSearchParams {

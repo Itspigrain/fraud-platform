@@ -15,5 +15,7 @@ public record RuleRequest(
     String promptTemplate,
     Integer evaluationIntervalMinutes,
     String verdict,
-    String severity
+    String severity,
+    List<Long> dependsOn,
+    DependencyCondition dependencyCondition
 ) {}

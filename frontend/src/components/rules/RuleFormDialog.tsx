@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConditionBuilder } from './ConditionBuilder';
-import type { RuleCondition, RuleRequest, RuleResponse, RuleType } from '@/lib/types';
+import { fetchRules } from '@/lib/api';
+import type { DependencyCondition, RuleCondition, RuleRequest, RuleResponse, RuleType } from '@/lib/types';
 
 interface RuleFormDialogProps {
   rule?: RuleResponse | null;
@@ -26,6 +27,13 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
   const [evaluationIntervalMinutes, setEvaluationIntervalMinutes] = useState(5);
   const [verdict, setVerdict] = useState('');
   const [severity, setSeverity] = useState('');
+  const [dependsOn, setDependsOn] = useState<number[]>([]);
+  const [dependencyCondition, setDependencyCondition] = useState<DependencyCondition>('ALL');
+  const [availableRules, setAvailableRules] = useState<RuleResponse[]>([]);
+
+  useEffect(() => {
+    fetchRules().then(setAvailableRules).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (rule) {
@@ -41,6 +49,8 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
       setEvaluationIntervalMinutes(rule.evaluationIntervalMinutes || 5);
       setVerdict(rule.verdict || '');
       setSeverity(rule.severity || '');
+      setDependsOn(rule.dependsOn || []);
+      setDependencyCondition(rule.dependencyCondition || 'ALL');
     }
   }, [rule]);
 
@@ -68,6 +78,8 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
 
     request.verdict = verdict || undefined;
     request.severity = severity || undefined;
+    request.dependsOn = dependsOn.length > 0 ? dependsOn : undefined;
+    request.dependencyCondition = dependsOn.length > 0 ? dependencyCondition : undefined;
 
     onSave(request);
   };
@@ -281,6 +293,62 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
                       className="mt-1"
                     />
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Dependencies */}
+            {availableRules.filter(r => r.id !== rule?.id && r.eventType === eventType).length > 0 && (
+              <div className="space-y-3 rounded-lg border border-slate-200 p-4">
+                <label className="text-sm font-medium text-slate-700">Dependencies (optional)</label>
+                <p className="text-xs text-slate-400">
+                  This rule will only fire if its dependency rules also match the event.
+                </p>
+                <div className="flex gap-2 mb-2">
+                  <button
+                    type="button"
+                    onClick={() => setDependencyCondition('ALL')}
+                    className={`px-3 py-1 rounded text-xs font-medium border transition-colors ${
+                      dependencyCondition === 'ALL'
+                        ? 'bg-slate-900 text-white border-slate-900'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    ALL must match
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDependencyCondition('ANY')}
+                    className={`px-3 py-1 rounded text-xs font-medium border transition-colors ${
+                      dependencyCondition === 'ANY'
+                        ? 'bg-slate-900 text-white border-slate-900'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    ANY must match
+                  </button>
+                </div>
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {availableRules
+                    .filter(r => r.id !== rule?.id && r.eventType === eventType)
+                    .map(r => (
+                      <label key={r.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={dependsOn.includes(r.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setDependsOn([...dependsOn, r.id]);
+                            } else {
+                              setDependsOn(dependsOn.filter(id => id !== r.id));
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        <span>{r.name}</span>
+                        <span className="text-xs text-slate-400">({r.ruleType})</span>
+                      </label>
+                    ))}
                 </div>
               </div>
             )}

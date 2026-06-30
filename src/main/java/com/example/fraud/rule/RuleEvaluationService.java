@@ -12,9 +12,16 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -24,9 +31,74 @@ public class RuleEvaluationService {
     private final ElasticsearchTemplate elasticsearchTemplate;
 
     public List<RuleEntity> evaluate(EventDocument event, List<RuleEntity> rules) {
-        return rules.stream()
-            .filter(rule -> matches(event, rule))
-            .toList();
+        List<RuleEntity> sorted = topologicalSort(rules);
+        Set<Long> matchedIds = new HashSet<>();
+        List<RuleEntity> matched = new ArrayList<>();
+
+        for (RuleEntity rule : sorted) {
+            if (!dependenciesSatisfied(rule, matchedIds)) continue;
+            if (matches(event, rule)) {
+                matchedIds.add(rule.getId());
+                matched.add(rule);
+            }
+        }
+
+        return matched;
+    }
+
+    private boolean dependenciesSatisfied(RuleEntity rule, Set<Long> matchedIds) {
+        List<Long> deps = rule.getParsedDependsOn();
+        if (deps.isEmpty()) return true;
+
+        DependencyCondition condition = rule.getDependencyCondition();
+        if (condition == null) condition = DependencyCondition.ALL;
+
+        return switch (condition) {
+            case ALL -> matchedIds.containsAll(deps);
+            case ANY -> deps.stream().anyMatch(matchedIds::contains);
+        };
+    }
+
+    List<RuleEntity> topologicalSort(List<RuleEntity> rules) {
+        Map<Long, RuleEntity> ruleMap = rules.stream()
+            .collect(Collectors.toMap(RuleEntity::getId, r -> r));
+
+        Map<Long, Integer> inDegree = new HashMap<>();
+        for (RuleEntity rule : rules) {
+            inDegree.putIfAbsent(rule.getId(), 0);
+            for (Long depId : rule.getParsedDependsOn()) {
+                if (ruleMap.containsKey(depId)) {
+                    inDegree.merge(rule.getId(), 1, Integer::sum);
+                }
+            }
+        }
+
+        Queue<Long> queue = new LinkedList<>();
+        for (var entry : inDegree.entrySet()) {
+            if (entry.getValue() == 0) queue.add(entry.getKey());
+        }
+
+        List<RuleEntity> sorted = new ArrayList<>();
+        while (!queue.isEmpty()) {
+            Long id = queue.poll();
+            sorted.add(ruleMap.get(id));
+            for (RuleEntity rule : rules) {
+                if (rule.getParsedDependsOn().contains(id) && ruleMap.containsKey(rule.getId())) {
+                    int newDegree = inDegree.merge(rule.getId(), -1, Integer::sum);
+                    if (newDegree == 0) queue.add(rule.getId());
+                }
+            }
+        }
+
+        // Any rules not in sorted (due to cycles among active rules) are appended at the end
+        if (sorted.size() < rules.size()) {
+            Set<Long> sortedIds = sorted.stream().map(RuleEntity::getId).collect(Collectors.toSet());
+            for (RuleEntity rule : rules) {
+                if (!sortedIds.contains(rule.getId())) sorted.add(rule);
+            }
+        }
+
+        return sorted;
     }
 
     private boolean matches(EventDocument event, RuleEntity rule) {
