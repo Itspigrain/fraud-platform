@@ -2,7 +2,7 @@ package com.example.fraud.llm;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import com.example.fraud.event.EventDocument;
-import com.example.fraud.fraud.FraudAlert;
+import com.example.fraud.alert.Alert;
 import com.example.fraud.pipeline.LogstashEventPublisher;
 import com.example.fraud.rule.*;
 import com.example.fraud.schema.SchemaIndexService;
@@ -84,12 +84,13 @@ public class LlmRuleScheduler {
 
         if (verdict.matched()) {
             for (EventDocument event : events) {
-                FraudAlert alert = new FraudAlert(
+                Alert alert = new Alert(
                     UUID.randomUUID().toString(),
                     rule.getTenantId(),
                     event.id(),
                     rule.getName(),
-                    "HIGH",
+                    rule.getSeverity() != null ? rule.getSeverity() : "HIGH",
+                    rule.getVerdict() != null ? rule.getVerdict() : "REVIEW",
                     "Rule '" + rule.getName() + "': " + verdict.reasoning(),
                     Instant.now()
                 );

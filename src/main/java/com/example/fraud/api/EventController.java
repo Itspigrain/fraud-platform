@@ -3,7 +3,7 @@ package com.example.fraud.api;
 import com.example.fraud.audit.AuditEntry;
 import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRequest;
-import com.example.fraud.fraud.FraudAlert;
+import com.example.fraud.alert.Alert;
 import com.example.fraud.pipeline.LogstashEventPublisher;
 import com.example.fraud.rule.RuleEntity;
 import com.example.fraud.rule.RuleService;
@@ -72,12 +72,13 @@ public class EventController {
             .toList();
 
         for (RuleEntity rule : matchedRules) {
-            FraudAlert alert = new FraudAlert(
+            Alert alert = new Alert(
                 UUID.randomUUID().toString(),
                 tenantId,
                 doc.id(),
                 rule.getName(),
-                "HIGH",
+                rule.getSeverity() != null ? rule.getSeverity() : "HIGH",
+                rule.getVerdict() != null ? rule.getVerdict() : "REVIEW",
                 rule.getDescription(),
                 Instant.now()
             );

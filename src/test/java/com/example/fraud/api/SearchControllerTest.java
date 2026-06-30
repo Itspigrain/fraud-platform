@@ -3,9 +3,9 @@ package com.example.fraud.api;
 import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventSearchRequest;
 import com.example.fraud.event.EventSearchService;
-import com.example.fraud.fraud.AlertDocument;
-import com.example.fraud.fraud.AlertSearchRequest;
-import com.example.fraud.fraud.AlertSearchService;
+import com.example.fraud.alert.AlertDocument;
+import com.example.fraud.alert.AlertSearchRequest;
+import com.example.fraud.alert.AlertSearchService;
 import com.example.fraud.search.AggregationService;
 import com.example.fraud.search.PageInfo;
 import com.example.fraud.search.SearchResponse;
@@ -48,13 +48,14 @@ class SearchControllerTest {
     @Test
     void searchAlertsDelegatesToService() {
         var alert = new AlertDocument("a1", "t1", "e1", "VELOCITY",
-            "HIGH", "reason", Instant.parse("2026-06-16T12:00:00Z"));
+            "HIGH", "REVIEW",
+            "reason", Instant.parse("2026-06-16T12:00:00Z"));
         var expected = new SearchResponse<>(List.of(alert),
             new PageInfo(0, 20, 1, 1));
         when(alertSearchService.search(any(AlertSearchRequest.class))).thenReturn(expected);
 
         var response = controller.searchAlerts(
-            null, null, null, null, null, null,
+            null, null, null, null, null, null, null,
             0, 20, "detectedAt", "desc");
 
         assertThat(response.results()).hasSize(1);

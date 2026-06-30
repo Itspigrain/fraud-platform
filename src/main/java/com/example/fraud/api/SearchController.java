@@ -3,9 +3,9 @@ package com.example.fraud.api;
 import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventSearchRequest;
 import com.example.fraud.event.EventSearchService;
-import com.example.fraud.fraud.AlertDocument;
-import com.example.fraud.fraud.AlertSearchRequest;
-import com.example.fraud.fraud.AlertSearchService;
+import com.example.fraud.alert.AlertDocument;
+import com.example.fraud.alert.AlertSearchRequest;
+import com.example.fraud.alert.AlertSearchService;
 import com.example.fraud.search.AggregationService;
 import com.example.fraud.search.SearchResponse;
 import com.example.fraud.search.StatsResponse;
@@ -49,6 +49,7 @@ public class SearchController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String ruleId,
             @RequestParam(required = false) String severity,
+            @RequestParam(required = false) String verdict,
             @RequestParam(required = false) String eventId,
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to,
@@ -58,7 +59,7 @@ public class SearchController {
             @RequestParam(defaultValue = "desc") String direction) {
 
         var request = new AlertSearchRequest(q, ruleId, severity,
-            eventId,
+            verdict, eventId,
             parseInstant(from, "from"), parseInstant(to, "to"),
             page, size, sort, direction);
 
@@ -88,6 +89,7 @@ public class SearchController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String ruleId,
             @RequestParam(required = false) String severity,
+            @RequestParam(required = false) String verdict,
             @RequestParam(required = false) String eventId,
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to,
@@ -97,7 +99,7 @@ public class SearchController {
             @RequestParam(defaultValue = "desc") String direction) {
 
         var request = new AlertSearchRequest(q, ruleId, severity,
-            eventId,
+            verdict, eventId,
             parseInstant(from, "from"), parseInstant(to, "to"),
             page, size, sort, direction);
 

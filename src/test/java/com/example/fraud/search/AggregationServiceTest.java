@@ -6,8 +6,8 @@ import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.aggregations.Buckets;
 import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventSearchRequest;
-import com.example.fraud.fraud.AlertDocument;
-import com.example.fraud.fraud.AlertSearchRequest;
+import com.example.fraud.alert.AlertDocument;
+import com.example.fraud.alert.AlertSearchRequest;
 import com.example.fraud.tenant.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -97,7 +97,7 @@ class AggregationServiceTest {
             .thenReturn(searchHits);
 
         var request = new AlertSearchRequest(
-            null, null, null, null,
+            null, null, null, null, null,
             null, null,
             0, 20, "detectedAt", "desc");
 

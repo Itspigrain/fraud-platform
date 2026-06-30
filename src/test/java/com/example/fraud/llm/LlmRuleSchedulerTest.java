@@ -1,7 +1,7 @@
 package com.example.fraud.llm;
 
 import com.example.fraud.event.EventDocument;
-import com.example.fraud.fraud.FraudAlert;
+import com.example.fraud.alert.Alert;
 import com.example.fraud.pipeline.LogstashEventPublisher;
 import com.example.fraud.rule.*;
 import com.example.fraud.tenant.TenantContext;
@@ -61,10 +61,10 @@ class LlmRuleSchedulerTest {
 
         scheduler.tick();
 
-        ArgumentCaptor<FraudAlert> alertCaptor = ArgumentCaptor.forClass(FraudAlert.class);
+        ArgumentCaptor<Alert> alertCaptor = ArgumentCaptor.forClass(Alert.class);
         verify(publisher).writeAlert(alertCaptor.capture());
 
-        FraudAlert alert = alertCaptor.getValue();
+        Alert alert = alertCaptor.getValue();
         assertThat(alert.ruleId()).isEqualTo("Detect fraud");
         assertThat(alert.reason()).contains("Detect fraud");
         assertThat(alert.reason()).contains("Card-testing pattern detected");

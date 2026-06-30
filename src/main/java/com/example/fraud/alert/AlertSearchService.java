@@ -1,4 +1,4 @@
-package com.example.fraud.fraud;
+package com.example.fraud.alert;
 
 import com.example.fraud.search.PageInfo;
 import com.example.fraud.search.SearchResponse;
@@ -30,6 +30,7 @@ public class AlertSearchService {
             }
             addTermFilter(b, "ruleId", request.ruleId());
             addTermFilter(b, "severity", request.severity());
+            addTermFilter(b, "verdict", request.verdict());
             addTermFilter(b, "eventId", request.eventId());
             if (request.from() != null || request.to() != null) {
                 b.filter(Query.of(q -> q.range(r -> r.date(d -> {
