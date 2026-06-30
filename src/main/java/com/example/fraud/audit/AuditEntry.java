@@ -2,6 +2,7 @@ package com.example.fraud.audit;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 public record AuditEntry(
     String auditId,
@@ -9,6 +10,6 @@ public record AuditEntry(
     String eventId,
     List<String> rulesEvaluated,
     List<String> rulesFired,
-    String decision,
+    List<Map<String, String>> verdicts,
     Instant evaluatedAt
 ) {}

@@ -3,6 +3,7 @@ package com.example.fraud.api;
 import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRequest;
 import com.example.fraud.pipeline.LogstashEventPublisher;
+import com.example.fraud.rule.RuleEntity;
 import com.example.fraud.rule.RuleService;
 import com.example.fraud.schema.*;
 import com.example.fraud.tenant.TenantContext;
@@ -46,7 +47,44 @@ class EventControllerTest {
     }
 
     @Test
-    void ingestValidatesAndPublishesEvent() {
+    void ingestReturnsVerdictsFromMatchedRules() {
+        var schema = new EventSchemaEntity();
+        schema.setTenantId("t1");
+        schema.setEventType("purchase");
+        schema.setFieldsFromList(List.of(
+            new SchemaFieldDefinition("amount", SchemaFieldType.DOUBLE, true, null)
+        ));
+
+        RuleEntity matchedRule = new RuleEntity();
+        matchedRule.setName("High Value");
+        matchedRule.setDescription("amount > 10000");
+        matchedRule.setVerdict("BLOCK");
+        matchedRule.setSeverity("CRITICAL");
+
+        when(schemaService.findSchema("t1", "purchase")).thenReturn(Optional.of(schema));
+        when(validationService.validateAttributes(anyMap(), anyList())).thenReturn(List.of());
+        when(validationService.stripUnknownFields(anyMap(), anyList())).thenReturn(Map.of("amount", 15000.0));
+        when(ruleService.evaluateEvent(eq("t1"), eq("purchase"), any())).thenReturn(List.of(matchedRule));
+
+        var request = new EventRequest("purchase", Instant.now(), Map.of("amount", 15000.0));
+        var response = controller.ingest(request);
+
+        assertThat(response.get("eventId")).isNotNull();
+        assertThat(response.get("eventType")).isEqualTo("purchase");
+        assertThat(response).doesNotContainKey("decision");
+        assertThat(response).doesNotContainKey("matchedRules");
+
+        @SuppressWarnings("unchecked")
+        var verdicts = (List<Map<String, String>>) response.get("verdicts");
+        assertThat(verdicts).hasSize(1);
+        assertThat(verdicts.get(0).get("rule")).isEqualTo("High Value");
+        assertThat(verdicts.get(0).get("verdict")).isEqualTo("BLOCK");
+        assertThat(verdicts.get(0).get("severity")).isEqualTo("CRITICAL");
+        assertThat(verdicts.get(0).get("reason")).isEqualTo("amount > 10000");
+    }
+
+    @Test
+    void ingestReturnsEmptyVerdictsWhenNoRulesMatch() {
         var schema = new EventSchemaEntity();
         schema.setTenantId("t1");
         schema.setEventType("purchase");
@@ -56,17 +94,42 @@ class EventControllerTest {
 
         when(schemaService.findSchema("t1", "purchase")).thenReturn(Optional.of(schema));
         when(validationService.validateAttributes(anyMap(), anyList())).thenReturn(List.of());
-        when(validationService.stripUnknownFields(anyMap(), anyList())).thenReturn(Map.of("amount", 99.0));
+        when(validationService.stripUnknownFields(anyMap(), anyList())).thenReturn(Map.of("amount", 50.0));
         when(ruleService.evaluateEvent(eq("t1"), eq("purchase"), any())).thenReturn(List.of());
 
-        var request = new EventRequest("purchase", Instant.now(), Map.of("amount", 99.0));
+        var request = new EventRequest("purchase", Instant.now(), Map.of("amount", 50.0));
         var response = controller.ingest(request);
 
-        assertThat(response.get("eventId")).isNotNull();
-        assertThat(response.get("eventType")).isEqualTo("purchase");
-        assertThat(response.get("decision")).isEqualTo("ALLOW");
-        verify(publisher).writeEvent(any(EventDocument.class));
-        verify(publisher).writeAudit(any());
+        @SuppressWarnings("unchecked")
+        var verdicts = (List<Map<String, String>>) response.get("verdicts");
+        assertThat(verdicts).isEmpty();
+    }
+
+    @Test
+    void ingestDefaultsVerdictAndSeverityWhenNull() {
+        var schema = new EventSchemaEntity();
+        schema.setTenantId("t1");
+        schema.setEventType("purchase");
+        schema.setFieldsFromList(List.of(
+            new SchemaFieldDefinition("amount", SchemaFieldType.DOUBLE, true, null)
+        ));
+
+        RuleEntity matchedRule = new RuleEntity();
+        matchedRule.setName("Old Rule");
+        matchedRule.setDescription("legacy rule");
+
+        when(schemaService.findSchema("t1", "purchase")).thenReturn(Optional.of(schema));
+        when(validationService.validateAttributes(anyMap(), anyList())).thenReturn(List.of());
+        when(validationService.stripUnknownFields(anyMap(), anyList())).thenReturn(Map.of("amount", 15000.0));
+        when(ruleService.evaluateEvent(eq("t1"), eq("purchase"), any())).thenReturn(List.of(matchedRule));
+
+        var request = new EventRequest("purchase", Instant.now(), Map.of("amount", 15000.0));
+        var response = controller.ingest(request);
+
+        @SuppressWarnings("unchecked")
+        var verdicts = (List<Map<String, String>>) response.get("verdicts");
+        assertThat(verdicts.get(0).get("verdict")).isEqualTo("REVIEW");
+        assertThat(verdicts.get(0).get("severity")).isEqualTo("HIGH");
     }
 
     @Test
