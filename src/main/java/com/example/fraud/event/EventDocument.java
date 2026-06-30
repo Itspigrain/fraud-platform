@@ -11,5 +11,6 @@ public record EventDocument(
     String tenantId,
     String eventType,
     Instant eventTime,
-    Map<String, Object> attributes
+    Map<String, Object> attributes,
+    Map<String, Object> exportedFeatures
 ) {}

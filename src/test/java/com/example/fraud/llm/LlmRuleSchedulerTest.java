@@ -53,7 +53,7 @@ class LlmRuleSchedulerTest {
         when(ruleRepository.findByRuleTypeAndStatus(RuleType.LLM_EVALUATOR, RuleStatus.ACTIVE))
             .thenReturn(List.of(rule));
 
-        EventDocument event = new EventDocument("evt1", "tenant1", "purchase", Instant.now(), Map.of("amount", 100));
+        EventDocument event = new EventDocument("evt1", "tenant1", "purchase", Instant.now(), Map.of("amount", 100), null);
         mockSearchResults(event);
 
         when(llmClient.evaluate(any(), any()))
@@ -96,7 +96,7 @@ class LlmRuleSchedulerTest {
         when(ruleRepository.findByRuleTypeAndStatus(RuleType.LLM_EVALUATOR, RuleStatus.ACTIVE))
             .thenReturn(List.of(rule));
 
-        EventDocument event = new EventDocument("evt1", "tenant1", "purchase", Instant.now(), Map.of());
+        EventDocument event = new EventDocument("evt1", "tenant1", "purchase", Instant.now(), Map.of(), null);
         mockSearchResults(event);
         when(llmClient.evaluate(any(), any())).thenReturn(new LlmVerdict(false, "OK"));
 
@@ -113,7 +113,7 @@ class LlmRuleSchedulerTest {
         when(ruleRepository.findByRuleTypeAndStatus(RuleType.LLM_EVALUATOR, RuleStatus.ACTIVE))
             .thenReturn(List.of(rule));
 
-        EventDocument event = new EventDocument("evt1", "tenant1", "purchase", Instant.now(), Map.of());
+        EventDocument event = new EventDocument("evt1", "tenant1", "purchase", Instant.now(), Map.of(), null);
         mockSearchResults(event);
 
         when(llmClient.evaluate(any(), any()))

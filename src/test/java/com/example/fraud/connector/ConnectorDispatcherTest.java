@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -46,7 +47,7 @@ class ConnectorDispatcherTest {
         connector.setRetryAttempts(3);
         connector.setRetryDelayMs(1000);
 
-        EventDocument event = new EventDocument("e1", "t1", "purchase", Instant.now(), Map.of("amount", 9999));
+        EventDocument event = new EventDocument("e1", "t1", "purchase", Instant.now(), Map.of("amount", 9999), null);
         Alert alert = new Alert("a1", "t1", "e1", "test-rule", "CRITICAL", "BLOCK", "desc", Instant.now());
 
         when(connectorService.getActiveConnectors("t1")).thenReturn(List.of(connector));
@@ -67,7 +68,7 @@ class ConnectorDispatcherTest {
         connector.setName("other-hook");
         connector.setRuleIdsFromList(List.of(99L));
 
-        EventDocument event = new EventDocument("e1", "t1", "purchase", Instant.now(), Map.of());
+        EventDocument event = new EventDocument("e1", "t1", "purchase", Instant.now(), Map.of(), null);
         Alert alert = new Alert("a1", "t1", "e1", "test-rule", "HIGH", "REVIEW", "desc", Instant.now());
 
         when(connectorService.getActiveConnectors("t1")).thenReturn(List.of(connector));
@@ -99,7 +100,7 @@ class ConnectorDispatcherTest {
         c2.setRetryAttempts(3);
         c2.setRetryDelayMs(1000);
 
-        EventDocument event = new EventDocument("e1", "t1", "purchase", Instant.now(), Map.of());
+        EventDocument event = new EventDocument("e1", "t1", "purchase", Instant.now(), Map.of(), null);
         Alert alert = new Alert("a1", "t1", "e1", "test-rule", "HIGH", "REVIEW", "desc", Instant.now());
 
         when(connectorService.getActiveConnectors("t1")).thenReturn(List.of(c1, c2));
@@ -111,11 +112,46 @@ class ConnectorDispatcherTest {
     }
 
     @Test
+    void webhookPayloadIncludesExportedFeatures() throws Exception {
+        RuleEntity rule = new RuleEntity();
+        rule.setId(5L);
+        rule.setName("test-rule");
+        rule.setVerdict("BLOCK");
+        rule.setSeverity("CRITICAL");
+
+        ConnectorEntity connector = new ConnectorEntity();
+        connector.setId(10L);
+        connector.setName("slack-hook");
+        connector.setRuleIdsFromList(List.of(5L));
+        connector.setConfigFromMap(Map.of("url", "https://example.com/hook"));
+        connector.setRetryAttempts(3);
+        connector.setRetryDelayMs(1000);
+
+        Map<String, Object> features = Map.of("test_rule_matched", true, "test_rule_count", 12L);
+        EventDocument event = new EventDocument("e1", "t1", "purchase", Instant.now(),
+            Map.of("amount", 9999), features);
+        Alert alert = new Alert("a1", "t1", "e1", "test-rule", "CRITICAL", "BLOCK", "desc", Instant.now());
+
+        when(connectorService.getActiveConnectors("t1")).thenReturn(List.of(connector));
+
+        dispatcher.dispatch("t1", event, List.of(rule), List.of(alert));
+
+        var captor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(webhookExecutor).execute(eq(connector), captor.capture());
+
+        var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        var payload = mapper.readTree(captor.getValue());
+        assertThat(payload.has("exportedFeatures")).isTrue();
+        assertThat(payload.get("exportedFeatures").get("test_rule_matched").asBoolean()).isTrue();
+        assertThat(payload.get("exportedFeatures").get("test_rule_count").asLong()).isEqualTo(12L);
+    }
+
+    @Test
     void noOpWhenNoActiveConnectors() {
         RuleEntity rule = new RuleEntity();
         rule.setId(5L);
 
-        EventDocument event = new EventDocument("e1", "t1", "purchase", Instant.now(), Map.of());
+        EventDocument event = new EventDocument("e1", "t1", "purchase", Instant.now(), Map.of(), null);
 
         when(connectorService.getActiveConnectors("t1")).thenReturn(List.of());
 

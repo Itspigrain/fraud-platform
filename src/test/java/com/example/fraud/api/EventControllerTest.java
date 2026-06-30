@@ -4,6 +4,7 @@ import com.example.fraud.connector.ConnectorDispatcher;
 import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRequest;
 import com.example.fraud.pipeline.LogstashEventPublisher;
+import com.example.fraud.rule.EvaluationResult;
 import com.example.fraud.rule.RuleEntity;
 import com.example.fraud.rule.RuleService;
 import com.example.fraud.schema.*;
@@ -66,7 +67,8 @@ class EventControllerTest {
         when(schemaService.findSchema("t1", "purchase")).thenReturn(Optional.of(schema));
         when(validationService.validateAttributes(anyMap(), anyList())).thenReturn(List.of());
         when(validationService.stripUnknownFields(anyMap(), anyList())).thenReturn(Map.of("amount", 15000.0));
-        when(ruleService.evaluateEvent(eq("t1"), eq("purchase"), any())).thenReturn(List.of(matchedRule));
+        when(ruleService.evaluateEvent(eq("t1"), eq("purchase"), any()))
+            .thenReturn(new EvaluationResult(List.of(matchedRule), Map.of()));
 
         var request = new EventRequest("purchase", Instant.now(), Map.of("amount", 15000.0));
         var response = controller.ingest(request);
@@ -97,7 +99,8 @@ class EventControllerTest {
         when(schemaService.findSchema("t1", "purchase")).thenReturn(Optional.of(schema));
         when(validationService.validateAttributes(anyMap(), anyList())).thenReturn(List.of());
         when(validationService.stripUnknownFields(anyMap(), anyList())).thenReturn(Map.of("amount", 50.0));
-        when(ruleService.evaluateEvent(eq("t1"), eq("purchase"), any())).thenReturn(List.of());
+        when(ruleService.evaluateEvent(eq("t1"), eq("purchase"), any()))
+            .thenReturn(new EvaluationResult(List.of(), Map.of()));
 
         var request = new EventRequest("purchase", Instant.now(), Map.of("amount", 50.0));
         var response = controller.ingest(request);
@@ -123,7 +126,8 @@ class EventControllerTest {
         when(schemaService.findSchema("t1", "purchase")).thenReturn(Optional.of(schema));
         when(validationService.validateAttributes(anyMap(), anyList())).thenReturn(List.of());
         when(validationService.stripUnknownFields(anyMap(), anyList())).thenReturn(Map.of("amount", 15000.0));
-        when(ruleService.evaluateEvent(eq("t1"), eq("purchase"), any())).thenReturn(List.of(matchedRule));
+        when(ruleService.evaluateEvent(eq("t1"), eq("purchase"), any()))
+            .thenReturn(new EvaluationResult(List.of(matchedRule), Map.of()));
 
         var request = new EventRequest("purchase", Instant.now(), Map.of("amount", 15000.0));
         var response = controller.ingest(request);
@@ -172,5 +176,61 @@ class EventControllerTest {
         assertThatThrownBy(() -> controller.ingest(request))
             .isInstanceOf(ResponseStatusException.class)
             .hasMessageContaining("eventType is required");
+    }
+
+    @Test
+    void ingestReturnsExportedFeaturesInResponse() {
+        var schema = new EventSchemaEntity();
+        schema.setTenantId("t1");
+        schema.setEventType("purchase");
+        schema.setFieldsFromList(List.of(
+            new SchemaFieldDefinition("amount", SchemaFieldType.DOUBLE, true, null)
+        ));
+
+        RuleEntity matchedRule = new RuleEntity();
+        matchedRule.setName("High Value");
+        matchedRule.setDescription("amount > 10000");
+        matchedRule.setVerdict("BLOCK");
+        matchedRule.setSeverity("CRITICAL");
+
+        Map<String, Object> features = Map.of(
+            "high_value_matched", true,
+            "high_value_amount", 15000.0
+        );
+        var evalResult = new EvaluationResult(List.of(matchedRule), features);
+
+        when(schemaService.findSchema("t1", "purchase")).thenReturn(Optional.of(schema));
+        when(validationService.validateAttributes(anyMap(), anyList())).thenReturn(List.of());
+        when(validationService.stripUnknownFields(anyMap(), anyList())).thenReturn(Map.of("amount", 15000.0));
+        when(ruleService.evaluateEvent(eq("t1"), eq("purchase"), any())).thenReturn(evalResult);
+
+        var request = new EventRequest("purchase", Instant.now(), Map.of("amount", 15000.0));
+        var response = controller.ingest(request);
+
+        assertThat(response.get("exportedFeatures")).isEqualTo(features);
+    }
+
+    @Test
+    void ingestReturnsEmptyFeaturesWhenNoRules() {
+        var schema = new EventSchemaEntity();
+        schema.setTenantId("t1");
+        schema.setEventType("purchase");
+        schema.setFieldsFromList(List.of(
+            new SchemaFieldDefinition("amount", SchemaFieldType.DOUBLE, true, null)
+        ));
+
+        var evalResult = new EvaluationResult(List.of(), Map.of());
+
+        when(schemaService.findSchema("t1", "purchase")).thenReturn(Optional.of(schema));
+        when(validationService.validateAttributes(anyMap(), anyList())).thenReturn(List.of());
+        when(validationService.stripUnknownFields(anyMap(), anyList())).thenReturn(Map.of("amount", 50.0));
+        when(ruleService.evaluateEvent(eq("t1"), eq("purchase"), any())).thenReturn(evalResult);
+
+        var request = new EventRequest("purchase", Instant.now(), Map.of("amount", 50.0));
+        var response = controller.ingest(request);
+
+        @SuppressWarnings("unchecked")
+        var features = (Map<String, Object>) response.get("exportedFeatures");
+        assertThat(features).isEmpty();
     }
 }

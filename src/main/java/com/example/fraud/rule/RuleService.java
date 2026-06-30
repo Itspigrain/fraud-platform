@@ -139,19 +139,19 @@ public class RuleService {
         log.info("Deleted rule id={} tenant={} indexDeleted={}", ruleId, tenantId, deleteIndex);
     }
 
-    public List<RuleEntity> evaluateEvent(String tenantId, String eventType, EventDocument event) {
+    public EvaluationResult evaluateEvent(String tenantId, String eventType, EventDocument event) {
         List<RuleEntity> activeRules = getActiveRules(tenantId, eventType);
         if (activeRules.isEmpty()) {
-            return List.of();
+            return new EvaluationResult(List.of(), Map.of());
         }
 
-        List<RuleEntity> matched = evaluationService.evaluate(event, activeRules);
+        EvaluationResult result = evaluationService.evaluate(event, activeRules);
 
-        for (RuleEntity rule : matched) {
+        for (RuleEntity rule : result.matchedRules()) {
             indexService.indexEvent(tenantId, rule.getId(), event);
         }
 
-        return matched;
+        return result;
     }
 
     private List<RuleEntity> getActiveRules(String tenantId, String eventType) {

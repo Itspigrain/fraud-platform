@@ -29,13 +29,14 @@ class RuleComposabilityTest {
         rule.setId(id);
         rule.setTenantId("t1");
         rule.setEventType("purchase");
+        rule.setName("rule_" + id);
         rule.setRuleType(RuleType.CONDITION);
         rule.setConditionsFromList(List.of(new RuleCondition(field, op, value)));
         return rule;
     }
 
     private EventDocument event(Map<String, Object> attrs) {
-        return new EventDocument("e1", "t1", "purchase", Instant.now(), attrs);
+        return new EventDocument("e1", "t1", "purchase", Instant.now(), attrs, null);
     }
 
     @Test
@@ -43,9 +44,9 @@ class RuleComposabilityTest {
         RuleEntity rule = conditionRule(1L, "country", "NG");
         EventDocument evt = event(Map.of("country", "NG"));
 
-        List<RuleEntity> matched = evaluationService.evaluate(evt, List.of(rule));
+        EvaluationResult result = evaluationService.evaluate(evt, List.of(rule));
 
-        assertThat(matched).containsExactly(rule);
+        assertThat(result.matchedRules()).containsExactly(rule);
     }
 
     @Test
@@ -59,9 +60,9 @@ class RuleComposabilityTest {
 
         EventDocument evt = event(Map.of("country", "NG", "amount", "5000", "currency", "NGN"));
 
-        List<RuleEntity> matched = evaluationService.evaluate(evt, List.of(ruleA, ruleB, ruleC));
+        EvaluationResult result = evaluationService.evaluate(evt, List.of(ruleA, ruleB, ruleC));
 
-        assertThat(matched).extracting(RuleEntity::getId).containsExactly(1L, 2L, 3L);
+        assertThat(result.matchedRules()).extracting(RuleEntity::getId).containsExactly(1L, 2L, 3L);
     }
 
     @Test
@@ -75,9 +76,9 @@ class RuleComposabilityTest {
 
         EventDocument evt = event(Map.of("country", "NG", "amount", "500", "currency", "NGN"));
 
-        List<RuleEntity> matched = evaluationService.evaluate(evt, List.of(ruleA, ruleB, ruleC));
+        EvaluationResult result = evaluationService.evaluate(evt, List.of(ruleA, ruleB, ruleC));
 
-        assertThat(matched).extracting(RuleEntity::getId).containsExactly(1L);
+        assertThat(result.matchedRules()).extracting(RuleEntity::getId).containsExactly(1L);
     }
 
     @Test
@@ -91,9 +92,9 @@ class RuleComposabilityTest {
 
         EventDocument evt = event(Map.of("country", "NG", "amount", "500", "currency", "NGN"));
 
-        List<RuleEntity> matched = evaluationService.evaluate(evt, List.of(ruleA, ruleB, ruleC));
+        EvaluationResult result = evaluationService.evaluate(evt, List.of(ruleA, ruleB, ruleC));
 
-        assertThat(matched).extracting(RuleEntity::getId).containsExactly(1L, 3L);
+        assertThat(result.matchedRules()).extracting(RuleEntity::getId).containsExactly(1L, 3L);
     }
 
     @Test
@@ -107,9 +108,9 @@ class RuleComposabilityTest {
 
         EventDocument evt = event(Map.of("country", "US", "amount", "500", "currency", "NGN"));
 
-        List<RuleEntity> matched = evaluationService.evaluate(evt, List.of(ruleA, ruleB, ruleC));
+        EvaluationResult result = evaluationService.evaluate(evt, List.of(ruleA, ruleB, ruleC));
 
-        assertThat(matched).isEmpty();
+        assertThat(result.matchedRules()).isEmpty();
     }
 
     @Test
@@ -137,9 +138,9 @@ class RuleComposabilityTest {
 
         EventDocument evt = event(Map.of("country", "NG", "amount", "5000", "currency", "NGN"));
 
-        List<RuleEntity> matched = evaluationService.evaluate(evt, List.of(ruleC, ruleA, ruleB));
+        EvaluationResult result = evaluationService.evaluate(evt, List.of(ruleC, ruleA, ruleB));
 
-        assertThat(matched).extracting(RuleEntity::getId).containsExactly(1L, 2L, 3L);
+        assertThat(result.matchedRules()).extracting(RuleEntity::getId).containsExactly(1L, 2L, 3L);
     }
 
     @Test
@@ -153,9 +154,9 @@ class RuleComposabilityTest {
 
         EventDocument evt = event(Map.of("country", "NG", "amount", "500", "currency", "NGN"));
 
-        List<RuleEntity> matched = evaluationService.evaluate(evt, List.of(ruleA, ruleB, ruleC));
+        EvaluationResult result = evaluationService.evaluate(evt, List.of(ruleA, ruleB, ruleC));
 
-        assertThat(matched).extracting(RuleEntity::getId).containsExactly(1L);
+        assertThat(result.matchedRules()).extracting(RuleEntity::getId).containsExactly(1L);
     }
 
     @Test
@@ -165,8 +166,8 @@ class RuleComposabilityTest {
 
         EventDocument evt = event(Map.of("country", "NG", "amount", "5000"));
 
-        List<RuleEntity> matched = evaluationService.evaluate(evt, List.of(ruleA, ruleB));
+        EvaluationResult result = evaluationService.evaluate(evt, List.of(ruleA, ruleB));
 
-        assertThat(matched).extracting(RuleEntity::getId).containsExactlyInAnyOrder(1L, 2L);
+        assertThat(result.matchedRules()).extracting(RuleEntity::getId).containsExactlyInAnyOrder(1L, 2L);
     }
 }

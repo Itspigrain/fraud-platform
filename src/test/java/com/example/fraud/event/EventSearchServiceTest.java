@@ -40,7 +40,7 @@ class EventSearchServiceTest {
 
     private EventDocument sampleEvent(String id) {
         return new EventDocument(id, "t1", "LOGIN",
-            Instant.parse("2026-06-16T12:00:00Z"), Map.of("customerId", "c1"));
+            Instant.parse("2026-06-16T12:00:00Z"), Map.of("customerId", "c1"), null);
     }
 
     private SearchHits<EventDocument> mockHits(List<EventDocument> docs, long total) {

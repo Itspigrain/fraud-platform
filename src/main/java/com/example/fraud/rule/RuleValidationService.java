@@ -65,6 +65,10 @@ public class RuleValidationService {
 
             String attrKey = field.startsWith("attributes.") ? field.substring("attributes.".length()) : field;
 
+            if (attrKey.startsWith("exports.")) {
+                continue;
+            }
+
             if (!BUILTIN_FIELDS.contains(attrKey) && !fieldMap.containsKey(attrKey)) {
                 errors.add(new ValidationError(field, "Field '" + attrKey + "' is not defined in the schema"));
                 continue;

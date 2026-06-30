@@ -33,7 +33,7 @@ class SearchControllerTest {
     @Test
     void searchEventsDelegatesToService() {
         var doc = new EventDocument("e1", "t1", "LOGIN",
-            Instant.parse("2026-06-16T12:00:00Z"), Map.of());
+            Instant.parse("2026-06-16T12:00:00Z"), Map.of(), null);
         var expected = new SearchResponse<>(List.of(doc),
             new PageInfo(0, 20, 1, 1));
         when(eventSearchService.search(any(EventSearchRequest.class))).thenReturn(expected);
