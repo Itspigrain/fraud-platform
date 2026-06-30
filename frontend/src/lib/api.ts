@@ -13,6 +13,9 @@ import type {
   SchemaResponse,
   SchemaRequest,
   ValidationError,
+  ConnectorResponse,
+  ConnectorRequest,
+  ConnectorTestResult,
 } from './types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -23,7 +26,7 @@ export function setApiTenantId(tenantId: string) {
   _tenantId = tenantId;
 }
 
-function buildQuery(params: Record<string, unknown>): string {
+function buildQuery(params: object): string {
   const searchParams = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== null && value !== '') {
@@ -33,7 +36,7 @@ function buildQuery(params: Record<string, unknown>): string {
   return searchParams.toString();
 }
 
-async function fetchJson<T>(path: string, params: Record<string, unknown> = {}): Promise<T> {
+async function fetchJson<T>(path: string, params: object = {}): Promise<T> {
   const query = buildQuery(params);
   const url = `${API_BASE}${path}${query ? `?${query}` : ''}`;
   const res = await fetch(url, {
@@ -134,4 +137,26 @@ export function deleteRule(id: number, deleteIndex = false) {
 
 export function fetchRuleResults(ruleId: number, params: EventSearchParams = {}) {
   return fetchJson<SearchResponse<EventDocument>>(`/api/rules/${ruleId}/results`, params);
+}
+
+// --- Connectors ---
+
+export function fetchConnectors() {
+  return fetchJson<ConnectorResponse[]>('/api/connectors');
+}
+
+export function createConnector(request: ConnectorRequest) {
+  return mutateJson<ConnectorResponse>('/api/connectors', 'POST', request);
+}
+
+export function updateConnector(id: number, request: ConnectorRequest) {
+  return mutateJson<ConnectorResponse>(`/api/connectors/${id}`, 'PUT', request);
+}
+
+export function deleteConnector(id: number) {
+  return mutateJson<void>(`/api/connectors/${id}`, 'DELETE');
+}
+
+export function testConnector(id: number) {
+  return mutateJson<ConnectorTestResult>(`/api/connectors/${id}/test`, 'POST');
 }

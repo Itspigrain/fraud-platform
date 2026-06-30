@@ -60,7 +60,7 @@ export function RulesPage() {
   const handleToggleStatus = async (rule: RuleResponse) => {
     try {
       const newStatus = rule.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-      await updateRule(rule.id, { name: rule.name, conditions: rule.conditions, status: newStatus });
+      await updateRule(rule.id, { eventType: rule.eventType, name: rule.name, conditions: rule.conditions, status: newStatus });
       toast.success(`Rule ${newStatus === 'ACTIVE' ? 'activated' : 'deactivated'}`);
       loadRules();
     } catch {

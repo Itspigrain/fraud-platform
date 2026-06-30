@@ -167,3 +167,48 @@ export interface AlertSearchParams {
   sort?: string;
   direction?: string;
 }
+
+// --- Connectors ---
+
+export type ConnectorType = 'WEBHOOK';
+export type ConnectorStatus = 'ACTIVE' | 'INACTIVE';
+
+export interface WebhookConfig {
+  url: string;
+  method?: string;
+  headers?: Record<string, string>;
+  timeoutMs?: number;
+}
+
+export interface ConnectorResponse {
+  id: number;
+  tenantId: string;
+  name: string;
+  description: string | null;
+  type: ConnectorType;
+  status: ConnectorStatus;
+  config: WebhookConfig;
+  ruleIds: number[];
+  retryAttempts: number;
+  retryDelayMs: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ConnectorRequest {
+  name: string;
+  description?: string;
+  type?: ConnectorType;
+  status?: ConnectorStatus;
+  config: WebhookConfig;
+  ruleIds: number[];
+  retryAttempts?: number;
+  retryDelayMs?: number;
+}
+
+export interface ConnectorTestResult {
+  success: boolean;
+  statusCode?: number;
+  error?: string;
+  responseTimeMs: number;
+}

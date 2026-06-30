@@ -10,6 +10,7 @@ const navItems = [
   { to: '/events', label: 'Events', icon: '⚡' },
   { to: '/alerts', label: 'Alerts', icon: '⚠' },
   { to: '/rules', label: 'Rules', icon: '⚙' },
+  { to: '/connectors', label: 'Connectors', icon: '⇌' },
 ];
 
 function formatTenantLabel(id: string) {
