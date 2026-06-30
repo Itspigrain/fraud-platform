@@ -1,5 +1,6 @@
 package com.example.fraud.config;
 
+import com.example.fraud.connector.ConnectorService;
 import com.example.fraud.rule.RuleService;
 import com.example.fraud.schema.SchemaService;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ public class CacheInvalidationListener implements MessageListener {
 
     private final RuleService ruleService;
     private final SchemaService schemaService;
+    private final ConnectorService connectorService;
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
@@ -30,6 +32,9 @@ public class CacheInvalidationListener implements MessageListener {
                 log.debug("Received schema cache invalidation for tenant={} eventType={}", parts[0], parts[1]);
                 schemaService.invalidateSchemaCache(parts[0], parts[1]);
             }
+        } else if (CacheInvalidationPublisher.CONNECTORS_CHANNEL.equals(channel)) {
+            log.debug("Received connector cache invalidation for tenant={}", body);
+            connectorService.invalidateCache(body);
         }
     }
 }

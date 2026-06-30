@@ -11,6 +11,7 @@ import { AlertsPage } from './pages/AlertsPage';
 import { RulesPage } from './pages/RulesPage';
 import { RuleResultsPage } from './pages/RuleResultsPage';
 import { SchemasPage } from './pages/SchemasPage';
+import { ConnectorsPage } from './pages/ConnectorsPage';
 import { TenantProvider, useTenant } from './lib/tenant-context';
 import { setApiTenantId } from './lib/api';
 
@@ -20,6 +21,7 @@ const pageTitles: Record<string, string> = {
   '/events': 'Events',
   '/alerts': 'Alerts',
   '/rules': 'Rules',
+  '/connectors': 'Connectors',
 };
 
 function Layout() {
@@ -45,6 +47,7 @@ function Layout() {
             <Route path="/alerts" element={<AlertsPage />} />
             <Route path="/rules" element={<RulesPage />} />
             <Route path="/rules/:id/results" element={<RuleResultsPage />} />
+            <Route path="/connectors" element={<ConnectorsPage />} />
           </Routes>
         </main>
       </div>

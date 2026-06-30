@@ -45,6 +45,7 @@ public class RedisConfig {
         container.setConnectionFactory(connectionFactory);
         container.addMessageListener(listener, new ChannelTopic(CacheInvalidationPublisher.RULES_CHANNEL));
         container.addMessageListener(listener, new ChannelTopic(CacheInvalidationPublisher.SCHEMAS_CHANNEL));
+        container.addMessageListener(listener, new ChannelTopic(CacheInvalidationPublisher.CONNECTORS_CHANNEL));
         return container;
     }
 }

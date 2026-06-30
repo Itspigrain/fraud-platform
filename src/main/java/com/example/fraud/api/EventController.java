@@ -1,6 +1,7 @@
 package com.example.fraud.api;
 
 import com.example.fraud.audit.AuditEntry;
+import com.example.fraud.connector.ConnectorDispatcher;
 import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRequest;
 import com.example.fraud.alert.Alert;
@@ -30,6 +31,7 @@ public class EventController {
     private final SchemaValidationService validationService;
     private final LogstashEventPublisher publisher;
     private final RuleService ruleService;
+    private final ConnectorDispatcher connectorDispatcher;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -77,6 +79,7 @@ public class EventController {
             ))
             .toList();
 
+        List<Alert> alerts = new ArrayList<>();
         for (RuleEntity rule : matchedRules) {
             Alert alert = new Alert(
                 UUID.randomUUID().toString(),
@@ -88,6 +91,7 @@ public class EventController {
                 rule.getDescription(),
                 Instant.now()
             );
+            alerts.add(alert);
             publisher.writeAlert(alert);
         }
 
@@ -105,6 +109,10 @@ public class EventController {
             Instant.now()
         );
         publisher.writeAudit(audit);
+
+        if (!matchedRules.isEmpty()) {
+            connectorDispatcher.dispatch(tenantId, doc, matchedRules, alerts);
+        }
 
         log.info("event_ingested tenant={} eventType={} eventId={} verdicts={}",
             tenantId, request.eventType(), doc.id(), verdicts);

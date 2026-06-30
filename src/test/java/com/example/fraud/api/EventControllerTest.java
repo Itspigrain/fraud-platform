@@ -1,5 +1,6 @@
 package com.example.fraud.api;
 
+import com.example.fraud.connector.ConnectorDispatcher;
 import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRequest;
 import com.example.fraud.pipeline.LogstashEventPublisher;
@@ -32,13 +33,14 @@ class EventControllerTest {
     @Mock private SchemaValidationService validationService;
     @Mock private LogstashEventPublisher publisher;
     @Mock private RuleService ruleService;
+    @Mock private ConnectorDispatcher connectorDispatcher;
 
     private EventController controller;
 
     @BeforeEach
     void setUp() {
         TenantContext.setTenantId("t1");
-        controller = new EventController(schemaService, validationService, publisher, ruleService);
+        controller = new EventController(schemaService, validationService, publisher, ruleService, connectorDispatcher);
     }
 
     @AfterEach

@@ -12,6 +12,7 @@ public class CacheInvalidationPublisher {
 
     static final String RULES_CHANNEL = "fraud:cache:rules";
     static final String SCHEMAS_CHANNEL = "fraud:cache:schemas";
+    static final String CONNECTORS_CHANNEL = "fraud:cache:connectors";
 
     private final StringRedisTemplate redisTemplate;
 
@@ -31,6 +32,15 @@ public class CacheInvalidationPublisher {
         } catch (Exception e) {
             log.warn("Failed to publish schema cache invalidation for tenant={} eventType={}: {}",
                 tenantId, eventType, e.getMessage());
+        }
+    }
+
+    public void publishConnectorInvalidation(String tenantId) {
+        try {
+            redisTemplate.convertAndSend(CONNECTORS_CHANNEL, tenantId);
+            log.debug("Published connector cache invalidation for tenant={}", tenantId);
+        } catch (Exception e) {
+            log.warn("Failed to publish connector cache invalidation for tenant={}: {}", tenantId, e.getMessage());
         }
     }
 }
