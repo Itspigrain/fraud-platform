@@ -23,6 +23,7 @@ export function RulesTable({ rules, onEdit, onDelete, onToggleStatus, onViewResu
           <TableHead>Status</TableHead>
           <TableHead>Verdict</TableHead>
           <TableHead>Severity</TableHead>
+          <TableHead>Depends On</TableHead>
           <TableHead>Config</TableHead>
           <TableHead>Created</TableHead>
           <TableHead className="text-right">Actions</TableHead>
@@ -31,7 +32,7 @@ export function RulesTable({ rules, onEdit, onDelete, onToggleStatus, onViewResu
       <TableBody>
         {rules.length === 0 && (
           <TableRow>
-            <TableCell colSpan={8} className="text-center text-slate-500 py-8">
+            <TableCell colSpan={9} className="text-center text-slate-500 py-8">
               No rules defined yet. Create one to get started.
             </TableCell>
           </TableRow>
@@ -65,6 +66,19 @@ export function RulesTable({ rules, onEdit, onDelete, onToggleStatus, onViewResu
             </TableCell>
             <TableCell>
               <Badge variant="outline">{rule.severity || 'HIGH'}</Badge>
+            </TableCell>
+            <TableCell className="text-sm text-slate-600">
+              {rule.dependsOn && rule.dependsOn.length > 0 ? (
+                <span>
+                  {rule.dependsOn.map(depId => {
+                    const depRule = rules.find(r => r.id === depId);
+                    return depRule?.name || `#${depId}`;
+                  }).join(', ')}
+                  <span className="text-xs text-slate-400 ml-1">({rule.dependencyCondition || 'ALL'})</span>
+                </span>
+              ) : (
+                <span className="text-slate-400">-</span>
+              )}
             </TableCell>
             <TableCell className="text-sm text-slate-600">
               {rule.ruleType === 'VELOCITY' ? (

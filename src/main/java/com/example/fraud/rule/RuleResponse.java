@@ -19,6 +19,8 @@ public record RuleResponse(
     Integer evaluationIntervalMinutes,
     String verdict,
     String severity,
+    List<Long> dependsOn,
+    DependencyCondition dependencyCondition,
     Instant createdAt,
     Instant updatedAt
 ) {
@@ -42,6 +44,8 @@ public record RuleResponse(
             entity.getEvaluationIntervalMinutes(),
             entity.getVerdict(),
             entity.getSeverity(),
+            entity.getParsedDependsOn(),
+            entity.getDependencyCondition(),
             entity.getCreatedAt(),
             entity.getUpdatedAt()
         );

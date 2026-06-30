@@ -8,9 +8,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,6 +30,10 @@ public class RuleService {
     private final Map<String, List<RuleEntity>> activeRulesCache = new ConcurrentHashMap<>();
 
     public RuleResponse create(String tenantId, RuleRequest request) {
+        if (request.dependsOn() != null && !request.dependsOn().isEmpty()) {
+            validateDependencies(tenantId, request.eventType(), null, request.dependsOn());
+        }
+
         RuleEntity entity = new RuleEntity();
         entity.setTenantId(tenantId);
         entity.setEventType(request.eventType());
@@ -34,6 +43,8 @@ public class RuleService {
         entity.setStatus(request.status() != null ? request.status() : RuleStatus.ACTIVE);
         entity.setVerdict(request.verdict());
         entity.setSeverity(request.severity());
+        entity.setDependsOnFromList(request.dependsOn());
+        entity.setDependencyCondition(request.dependencyCondition());
 
         if (entity.getRuleType() == RuleType.CONDITION) {
             entity.setConditionsFromList(request.conditions());
@@ -72,6 +83,11 @@ public class RuleService {
     public RuleResponse update(String tenantId, Long ruleId, RuleRequest request) {
         RuleEntity entity = findByIdAndTenant(tenantId, ruleId);
 
+        String effectiveEventType = request.eventType() != null ? request.eventType() : entity.getEventType();
+        if (request.dependsOn() != null && !request.dependsOn().isEmpty()) {
+            validateDependencies(tenantId, effectiveEventType, ruleId, request.dependsOn());
+        }
+
         if (request.eventType() != null) entity.setEventType(request.eventType());
         if (request.name() != null) entity.setName(request.name());
         if (request.description() != null) entity.setDescription(request.description());
@@ -85,6 +101,8 @@ public class RuleService {
         if (request.evaluationIntervalMinutes() != null) entity.setEvaluationIntervalMinutes(request.evaluationIntervalMinutes());
         if (request.verdict() != null) entity.setVerdict(request.verdict());
         if (request.severity() != null) entity.setSeverity(request.severity());
+        if (request.dependsOn() != null) entity.setDependsOnFromList(request.dependsOn());
+        if (request.dependencyCondition() != null) entity.setDependencyCondition(request.dependencyCondition());
 
         entity = ruleRepository.save(entity);
         invalidateRulesCache(tenantId);
@@ -130,6 +148,49 @@ public class RuleService {
 
     public void invalidateRulesCache(String tenantId) {
         activeRulesCache.keySet().removeIf(key -> key.startsWith(tenantId + ":"));
+    }
+
+    private void validateDependencies(String tenantId, String eventType, Long ruleId, List<Long> dependsOn) {
+        List<RuleEntity> depRules = ruleRepository.findAllById(dependsOn);
+
+        Set<Long> foundIds = depRules.stream().map(RuleEntity::getId).collect(Collectors.toSet());
+        List<Long> missing = dependsOn.stream().filter(id -> !foundIds.contains(id)).toList();
+        if (!missing.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Dependency rules not found: " + missing);
+        }
+
+        for (RuleEntity dep : depRules) {
+            if (!dep.getTenantId().equals(tenantId)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Dependency rule " + dep.getId() + " belongs to a different tenant");
+            }
+            if (!dep.getEventType().equals(eventType)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Dependency rule " + dep.getId() + " has different eventType: " + dep.getEventType());
+            }
+        }
+
+        if (ruleId != null) {
+            detectCircularDependency(ruleId, dependsOn);
+        }
+    }
+
+    private void detectCircularDependency(Long ruleId, List<Long> dependsOn) {
+        Set<Long> visited = new HashSet<>();
+        Queue<Long> queue = new LinkedList<>(dependsOn);
+
+        while (!queue.isEmpty()) {
+            Long depId = queue.poll();
+            if (depId.equals(ruleId)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Circular dependency detected involving rule " + ruleId);
+            }
+            if (visited.add(depId)) {
+                ruleRepository.findById(depId).ifPresent(dep ->
+                    queue.addAll(dep.getParsedDependsOn()));
+            }
+        }
     }
 
     private RuleEntity findByIdAndTenant(String tenantId, Long ruleId) {

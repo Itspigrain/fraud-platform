@@ -56,6 +56,12 @@ public class RuleEntity {
 
     private Integer threshold;
 
+    @Column(columnDefinition = "JSON")
+    private String dependsOn;
+
+    @Enumerated(EnumType.STRING)
+    private DependencyCondition dependencyCondition;
+
     @Column(columnDefinition = "TEXT")
     private String promptTemplate;
 
@@ -91,6 +97,23 @@ public class RuleEntity {
             this.conditions = MAPPER.writeValueAsString(conditionList);
         } catch (Exception e) {
             throw new IllegalStateException("Failed to serialize rule conditions", e);
+        }
+    }
+
+    public List<Long> getParsedDependsOn() {
+        if (dependsOn == null || dependsOn.isBlank()) return List.of();
+        try {
+            return MAPPER.readValue(dependsOn, new TypeReference<List<Long>>() {});
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    public void setDependsOnFromList(List<Long> ids) {
+        try {
+            this.dependsOn = MAPPER.writeValueAsString(ids != null ? ids : List.of());
+        } catch (Exception e) {
+            this.dependsOn = "[]";
         }
     }
 }
