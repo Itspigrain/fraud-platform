@@ -69,7 +69,8 @@ class LlmRuleSchedulerTest {
         assertThat(alert.reason()).contains("Detect fraud");
         assertThat(alert.reason()).contains("Card-testing pattern detected");
         assertThat(alert.eventId()).isEqualTo("evt1");
-        assertThat(alert.severity()).isEqualTo("HIGH");
+        assertThat(alert.severity()).isEqualTo("MEDIUM");
+        assertThat(alert.verdict()).isEqualTo("FLAG");
         assertThat(alert.tenantId()).isEqualTo("tenant1");
     }
 
@@ -154,6 +155,8 @@ class LlmRuleSchedulerTest {
         rule.setPromptTemplate("Analyze for fraud patterns");
         rule.setTimeWindowMinutes(timeWindow);
         rule.setEvaluationIntervalMinutes(interval);
+        rule.setVerdict("FLAG");
+        rule.setSeverity("MEDIUM");
         return rule;
     }
 }
