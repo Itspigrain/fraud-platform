@@ -1,5 +1,6 @@
 package com.example.fraud.rule;
 
+import com.example.fraud.config.CacheInvalidationPublisher;
 import com.example.fraud.event.EventDocument;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ public class RuleService {
     private final RuleRepository ruleRepository;
     private final RuleEvaluationService evaluationService;
     private final RuleIndexService indexService;
+    private final CacheInvalidationPublisher cacheInvalidationPublisher;
 
     private final Map<String, List<RuleEntity>> activeRulesCache = new ConcurrentHashMap<>();
 
@@ -49,7 +51,8 @@ public class RuleService {
 
         entity = ruleRepository.save(entity);
         indexService.createIndex(tenantId, entity.getId());
-        invalidateCache(tenantId);
+        invalidateRulesCache(tenantId);
+        cacheInvalidationPublisher.publishRuleInvalidation(tenantId);
 
         log.info("Created rule id={} name={} tenant={} eventType={}", entity.getId(), entity.getName(), tenantId, request.eventType());
         return RuleResponse.from(entity);
@@ -84,7 +87,8 @@ public class RuleService {
         if (request.severity() != null) entity.setSeverity(request.severity());
 
         entity = ruleRepository.save(entity);
-        invalidateCache(tenantId);
+        invalidateRulesCache(tenantId);
+        cacheInvalidationPublisher.publishRuleInvalidation(tenantId);
 
         log.info("Updated rule id={} tenant={}", ruleId, tenantId);
         return RuleResponse.from(entity);
@@ -98,7 +102,8 @@ public class RuleService {
             indexService.deleteIndex(tenantId, ruleId);
         }
 
-        invalidateCache(tenantId);
+        invalidateRulesCache(tenantId);
+        cacheInvalidationPublisher.publishRuleInvalidation(tenantId);
         log.info("Deleted rule id={} tenant={} indexDeleted={}", ruleId, tenantId, deleteIndex);
     }
 
@@ -123,7 +128,7 @@ public class RuleService {
             k -> ruleRepository.findByTenantIdAndEventTypeAndStatus(tenantId, eventType, RuleStatus.ACTIVE));
     }
 
-    private void invalidateCache(String tenantId) {
+    public void invalidateRulesCache(String tenantId) {
         activeRulesCache.keySet().removeIf(key -> key.startsWith(tenantId + ":"));
     }
 

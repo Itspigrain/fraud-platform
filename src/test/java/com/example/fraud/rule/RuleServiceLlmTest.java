@@ -1,11 +1,14 @@
 package com.example.fraud.rule;
 
+import com.example.fraud.config.CacheInvalidationPublisher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -18,6 +21,7 @@ class RuleServiceLlmTest {
     @Mock private RuleRepository ruleRepository;
     @Mock private RuleEvaluationService evaluationService;
     @Mock private RuleIndexService indexService;
+    @Mock private CacheInvalidationPublisher cacheInvalidationPublisher;
     @InjectMocks private RuleService ruleService;
 
     @Test
@@ -49,5 +53,25 @@ class RuleServiceLlmTest {
         assertThat(saved.getConditions()).isEqualTo("[]");
         assertThat(saved.getPromptTemplate()).isEqualTo("Analyze for card-testing patterns");
         assertThat(saved.getEvaluationIntervalMinutes()).isEqualTo(5);
+    }
+
+    @Test
+    void createPublishesCacheInvalidation() {
+        var request = new RuleRequest(
+            "purchase", "Test Rule", "desc",
+            RuleType.CONDITION, RuleStatus.ACTIVE,
+            List.of(new RuleCondition("amount", ConditionOperator.GREATER_THAN, "100")),
+            null, null, null, null, null, null, null
+        );
+
+        when(ruleRepository.save(any())).thenAnswer(inv -> {
+            RuleEntity e = inv.getArgument(0);
+            e.setId(2L);
+            return e;
+        });
+
+        ruleService.create("tenant-1", request);
+
+        verify(cacheInvalidationPublisher).publishRuleInvalidation("tenant-1");
     }
 }
