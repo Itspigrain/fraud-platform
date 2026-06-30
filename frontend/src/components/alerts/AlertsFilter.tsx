@@ -43,6 +43,15 @@ export function AlertsFilter({ filters, onChange, onSearch, onReset }: AlertsFil
           className="w-32"
         />
       </div>
+      <div>
+        <label className="text-xs text-slate-500">Verdict</label>
+        <Input
+          placeholder="BLOCK, REVIEW..."
+          value={filters.verdict ?? ''}
+          onChange={(e) => update('verdict', e.target.value)}
+          className="w-32"
+        />
+      </div>
       <Button onClick={onSearch} size="sm">Search</Button>
       <Button onClick={onReset} variant="outline" size="sm">Reset</Button>
     </div>

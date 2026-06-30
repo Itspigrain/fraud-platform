@@ -1,4 +1,4 @@
-package com.example.fraud.fraud;
+package com.example.fraud.alert;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
@@ -11,6 +11,7 @@ public record AlertDocument(
     String eventId,
     String ruleId,
     String severity,
+    String verdict,
     String reason,
     Instant detectedAt
 ) {}

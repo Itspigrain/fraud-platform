@@ -21,6 +21,8 @@ export function RulesTable({ rules, onEdit, onDelete, onToggleStatus, onViewResu
           <TableHead>Name</TableHead>
           <TableHead>Type</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead>Verdict</TableHead>
+          <TableHead>Severity</TableHead>
           <TableHead>Config</TableHead>
           <TableHead>Created</TableHead>
           <TableHead className="text-right">Actions</TableHead>
@@ -29,7 +31,7 @@ export function RulesTable({ rules, onEdit, onDelete, onToggleStatus, onViewResu
       <TableBody>
         {rules.length === 0 && (
           <TableRow>
-            <TableCell colSpan={6} className="text-center text-slate-500 py-8">
+            <TableCell colSpan={8} className="text-center text-slate-500 py-8">
               No rules defined yet. Create one to get started.
             </TableCell>
           </TableRow>
@@ -57,6 +59,12 @@ export function RulesTable({ rules, onEdit, onDelete, onToggleStatus, onViewResu
               >
                 {rule.status}
               </Badge>
+            </TableCell>
+            <TableCell>
+              <Badge variant="outline">{rule.verdict || 'REVIEW'}</Badge>
+            </TableCell>
+            <TableCell>
+              <Badge variant="outline">{rule.severity || 'HIGH'}</Badge>
             </TableCell>
             <TableCell className="text-sm text-slate-600">
               {rule.ruleType === 'VELOCITY' ? (

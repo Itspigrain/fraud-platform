@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LogstashEventPublisherTest {
@@ -52,7 +53,8 @@ class LogstashEventPublisherTest {
     void writeAuditAppendsJsonLineToAuditFile() throws Exception {
         var audit = new AuditEntry("au1", "t1", "e1",
             List.of("HIGH_VALUE", "VELOCITY"), List.of("HIGH_VALUE"),
-            "ALLOW", Instant.parse("2026-06-16T12:00:00Z"));
+            List.of(Map.of("rule", "HIGH_VALUE", "verdict", "REVIEW", "severity", "HIGH", "reason", "amount > 10000")),
+            Instant.parse("2026-06-16T12:00:00Z"));
 
         publisher.writeAudit(audit);
 
@@ -62,7 +64,7 @@ class LogstashEventPublisherTest {
         assertThat(lines).hasSize(1);
         var node = mapper.readTree(lines.get(0));
         assertThat(node.get("auditId").asText()).isEqualTo("au1");
-        assertThat(node.get("decision").asText()).isEqualTo("ALLOW");
+        assertThat(node.get("verdicts").isArray()).isTrue();
     }
 
     @Test

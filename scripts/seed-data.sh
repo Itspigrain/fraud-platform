@@ -45,13 +45,13 @@ echo ""
 echo "[2/4] Creating rules"
 
 post "/api/rules" "tenant-ecommerce" "Rule: high-value purchase" \
-  '{"eventType":"purchase","name":"High Value Purchase","description":"Flag purchases over $10,000","ruleType":"CONDITION","conditions":[{"field":"amount","operator":"GREATER_THAN","value":"10000"}]}'
+  '{"eventType":"purchase","name":"High Value Purchase","description":"Flag purchases over $10,000","ruleType":"CONDITION","conditions":[{"field":"amount","operator":"GREATER_THAN","value":"10000"}],"verdict":"REVIEW","severity":"HIGH"}'
 
 post "/api/rules" "tenant-ecommerce" "Rule: purchase velocity" \
-  '{"eventType":"purchase","name":"Purchase Velocity","description":"Flag >5 purchases in 10 minutes","ruleType":"VELOCITY","groupByField":"customerId","timeWindowMinutes":10,"threshold":5}'
+  '{"eventType":"purchase","name":"Purchase Velocity","description":"Flag >5 purchases in 10 minutes","ruleType":"VELOCITY","groupByField":"customerId","timeWindowMinutes":10,"threshold":5,"verdict":"BLOCK","severity":"CRITICAL"}'
 
 post "/api/rules" "tenant-banking" "Rule: large transfer" \
-  '{"eventType":"transfer","name":"Large Transfer","description":"Flag transfers over $25,000","ruleType":"CONDITION","conditions":[{"field":"amount","operator":"GREATER_THAN","value":"25000"}]}'
+  '{"eventType":"transfer","name":"Large Transfer","description":"Flag transfers over $25,000","ruleType":"CONDITION","conditions":[{"field":"amount","operator":"GREATER_THAN","value":"25000"}],"verdict":"REVIEW","severity":"HIGH"}'
 
 echo ""
 

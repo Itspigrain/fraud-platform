@@ -17,6 +17,8 @@ public record RuleResponse(
     Integer threshold,
     String promptTemplate,
     Integer evaluationIntervalMinutes,
+    String verdict,
+    String severity,
     Instant createdAt,
     Instant updatedAt
 ) {
@@ -38,6 +40,8 @@ public record RuleResponse(
             entity.getThreshold(),
             entity.getPromptTemplate(),
             entity.getEvaluationIntervalMinutes(),
+            entity.getVerdict(),
+            entity.getSeverity(),
             entity.getCreatedAt(),
             entity.getUpdatedAt()
         );

@@ -3,7 +3,7 @@ package com.example.fraud.api;
 import com.example.fraud.audit.AuditEntry;
 import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRequest;
-import com.example.fraud.fraud.FraudAlert;
+import com.example.fraud.alert.Alert;
 import com.example.fraud.pipeline.LogstashEventPublisher;
 import com.example.fraud.rule.RuleEntity;
 import com.example.fraud.rule.RuleService;
@@ -67,22 +67,33 @@ public class EventController {
         publisher.writeEvent(doc);
 
         List<RuleEntity> matchedRules = ruleService.evaluateEvent(tenantId, request.eventType(), doc);
-        List<String> matchedRuleNames = matchedRules.stream()
-            .map(RuleEntity::getName)
+
+        List<Map<String, String>> verdicts = matchedRules.stream()
+            .map(rule -> Map.of(
+                "rule", rule.getName(),
+                "verdict", rule.getVerdict() != null ? rule.getVerdict() : "REVIEW",
+                "severity", rule.getSeverity() != null ? rule.getSeverity() : "HIGH",
+                "reason", rule.getDescription() != null ? rule.getDescription() : ""
+            ))
             .toList();
 
         for (RuleEntity rule : matchedRules) {
-            FraudAlert alert = new FraudAlert(
+            Alert alert = new Alert(
                 UUID.randomUUID().toString(),
                 tenantId,
                 doc.id(),
                 rule.getName(),
-                "HIGH",
+                rule.getSeverity() != null ? rule.getSeverity() : "HIGH",
+                rule.getVerdict() != null ? rule.getVerdict() : "REVIEW",
                 rule.getDescription(),
                 Instant.now()
             );
             publisher.writeAlert(alert);
         }
+
+        List<String> matchedRuleNames = matchedRules.stream()
+            .map(RuleEntity::getName)
+            .toList();
 
         AuditEntry audit = new AuditEntry(
             UUID.randomUUID().toString(),
@@ -90,19 +101,18 @@ public class EventController {
             doc.id(),
             List.of(),
             matchedRuleNames,
-            matchedRules.isEmpty() ? "ALLOW" : "REVIEW",
+            verdicts,
             Instant.now()
         );
         publisher.writeAudit(audit);
 
-        log.info("event_ingested tenant={} eventType={} eventId={} rulesMatched={}",
-            tenantId, request.eventType(), doc.id(), matchedRuleNames);
+        log.info("event_ingested tenant={} eventType={} eventId={} verdicts={}",
+            tenantId, request.eventType(), doc.id(), verdicts);
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("eventId", doc.id());
         response.put("eventType", doc.eventType());
-        response.put("matchedRules", matchedRuleNames);
-        response.put("decision", audit.decision());
+        response.put("verdicts", verdicts);
         return response;
     }
 }

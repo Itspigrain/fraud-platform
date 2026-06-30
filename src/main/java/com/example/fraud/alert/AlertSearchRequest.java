@@ -1,4 +1,4 @@
-package com.example.fraud.fraud;
+package com.example.fraud.alert;
 
 import java.time.Instant;
 
@@ -6,6 +6,7 @@ public record AlertSearchRequest(
     String q,
     String ruleId,
     String severity,
+    String verdict,
     String eventId,
     Instant from,
     Instant to,

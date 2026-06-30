@@ -13,5 +13,7 @@ public record RuleRequest(
     Integer timeWindowMinutes,
     Integer threshold,
     String promptTemplate,
-    Integer evaluationIntervalMinutes
+    Integer evaluationIntervalMinutes,
+    String verdict,
+    String severity
 ) {}

@@ -45,19 +45,19 @@ echo ""
 echo "[2/4] Creating rules"
 
 post "/api/rules" "Rule: high-value crop sale" \
-  '{"eventType":"crop_sale","name":"High Value Crop Sale","description":"Flag crop sales over $50,000 - possible invoice fraud","ruleType":"CONDITION","conditions":[{"field":"totalAmount","operator":"GREATER_THAN","value":"50000"}]}'
+  '{"eventType":"crop_sale","name":"High Value Crop Sale","description":"Flag crop sales over $50,000 - possible invoice fraud","ruleType":"CONDITION","conditions":[{"field":"totalAmount","operator":"GREATER_THAN","value":"50000"}],"verdict":"REVIEW","severity":"HIGH"}'
 
 post "/api/rules" "Rule: excessive subsidy claim" \
-  '{"eventType":"subsidy_claim","name":"Excessive Subsidy Claim","description":"Flag subsidy claims over $100,000","ruleType":"CONDITION","conditions":[{"field":"claimAmount","operator":"GREATER_THAN","value":"100000"}]}'
+  '{"eventType":"subsidy_claim","name":"Excessive Subsidy Claim","description":"Flag subsidy claims over $100,000","ruleType":"CONDITION","conditions":[{"field":"claimAmount","operator":"GREATER_THAN","value":"100000"}],"verdict":"REVIEW","severity":"HIGH"}'
 
 post "/api/rules" "Rule: subsidy claim velocity" \
-  '{"eventType":"subsidy_claim","name":"Subsidy Claim Velocity","description":"Flag >3 subsidy claims from same farmer in 60 minutes","ruleType":"VELOCITY","groupByField":"farmerId","timeWindowMinutes":60,"threshold":3}'
+  '{"eventType":"subsidy_claim","name":"Subsidy Claim Velocity","description":"Flag >3 subsidy claims from same farmer in 60 minutes","ruleType":"VELOCITY","groupByField":"farmerId","timeWindowMinutes":60,"threshold":3,"verdict":"BLOCK","severity":"CRITICAL"}'
 
 post "/api/rules" "Rule: impossible yield" \
-  '{"eventType":"yield_report","name":"Impossible Yield","description":"Flag yield reports exceeding 15,000 kg per acre - biologically implausible","ruleType":"CONDITION","conditions":[{"field":"yieldKg","operator":"GREATER_THAN","value":"15000"}]}'
+  '{"eventType":"yield_report","name":"Impossible Yield","description":"Flag yield reports exceeding 15,000 kg per acre - biologically implausible","ruleType":"CONDITION","conditions":[{"field":"yieldKg","operator":"GREATER_THAN","value":"15000"}],"verdict":"FLAG","severity":"MEDIUM"}'
 
 post "/api/rules" "Rule: large equipment purchase" \
-  '{"eventType":"equipment_purchase","name":"Large Equipment Purchase","description":"Flag equipment purchases over $200,000","ruleType":"CONDITION","conditions":[{"field":"amount","operator":"GREATER_THAN","value":"200000"}]}'
+  '{"eventType":"equipment_purchase","name":"Large Equipment Purchase","description":"Flag equipment purchases over $200,000","ruleType":"CONDITION","conditions":[{"field":"amount","operator":"GREATER_THAN","value":"200000"}],"verdict":"REVIEW","severity":"HIGH"}'
 
 echo ""
 

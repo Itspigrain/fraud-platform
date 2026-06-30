@@ -26,7 +26,8 @@ class RuleServiceLlmTest {
             "purchase", "Card testing detector", "Detects card testing",
             RuleType.LLM_EVALUATOR, RuleStatus.ACTIVE,
             null, null, 30, null,
-            "Analyze for card-testing patterns", 5
+            "Analyze for card-testing patterns", 5,
+            null, null
         );
 
         when(ruleRepository.save(any())).thenAnswer(inv -> {

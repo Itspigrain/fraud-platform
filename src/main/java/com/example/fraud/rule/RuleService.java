@@ -30,6 +30,8 @@ public class RuleService {
         entity.setDescription(request.description());
         entity.setRuleType(request.ruleType() != null ? request.ruleType() : RuleType.CONDITION);
         entity.setStatus(request.status() != null ? request.status() : RuleStatus.ACTIVE);
+        entity.setVerdict(request.verdict());
+        entity.setSeverity(request.severity());
 
         if (entity.getRuleType() == RuleType.CONDITION) {
             entity.setConditionsFromList(request.conditions());
@@ -78,6 +80,8 @@ public class RuleService {
         if (request.threshold() != null) entity.setThreshold(request.threshold());
         if (request.promptTemplate() != null) entity.setPromptTemplate(request.promptTemplate());
         if (request.evaluationIntervalMinutes() != null) entity.setEvaluationIntervalMinutes(request.evaluationIntervalMinutes());
+        if (request.verdict() != null) entity.setVerdict(request.verdict());
+        if (request.severity() != null) entity.setSeverity(request.severity());
 
         entity = ruleRepository.save(entity);
         invalidateCache(tenantId);

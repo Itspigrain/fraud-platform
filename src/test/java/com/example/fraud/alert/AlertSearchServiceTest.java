@@ -1,4 +1,4 @@
-package com.example.fraud.fraud;
+package com.example.fraud.alert;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -26,7 +26,7 @@ class AlertSearchServiceTest {
 
     private AlertDocument sampleAlert(String alertId, String severity) {
         return new AlertDocument(alertId, "t1", "e1", "VELOCITY",
-            severity, "Too many transactions", Instant.parse("2026-06-16T12:00:00Z"));
+            severity, "REVIEW", "Too many transactions", Instant.parse("2026-06-16T12:00:00Z"));
     }
 
     private SearchHits<AlertDocument> mockHits(List<AlertDocument> docs, long total) {
@@ -46,7 +46,7 @@ class AlertSearchServiceTest {
             .thenReturn(hits);
 
         var request = new AlertSearchRequest(
-            null, null, null, null,
+            null, null, null, null, null,
             null, null,
             0, 20, "detectedAt", "desc");
 
@@ -65,7 +65,7 @@ class AlertSearchServiceTest {
             .thenReturn(hits);
 
         var request = new AlertSearchRequest(
-            null, null, "CRITICAL", null,
+            null, null, "CRITICAL", null, null,
             null, null,
             0, 20, "detectedAt", "desc");
 
@@ -83,7 +83,7 @@ class AlertSearchServiceTest {
             .thenReturn(hits);
 
         var request = new AlertSearchRequest(
-            "transactions", null, null, null,
+            "transactions", null, null, null, null,
             null, null,
             0, 20, "detectedAt", "desc");
 
@@ -99,7 +99,7 @@ class AlertSearchServiceTest {
             .thenReturn(hits);
 
         var request = new AlertSearchRequest(
-            null, null, null, null,
+            null, null, null, null, null,
             null, null,
             0, 20, "detectedAt", "desc");
 
