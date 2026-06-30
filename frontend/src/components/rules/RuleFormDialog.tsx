@@ -24,6 +24,8 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
   const [threshold, setThreshold] = useState(5);
   const [promptTemplate, setPromptTemplate] = useState('');
   const [evaluationIntervalMinutes, setEvaluationIntervalMinutes] = useState(5);
+  const [verdict, setVerdict] = useState('');
+  const [severity, setSeverity] = useState('');
 
   useEffect(() => {
     if (rule) {
@@ -37,6 +39,8 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
       setThreshold(rule.threshold || 5);
       setPromptTemplate(rule.promptTemplate || '');
       setEvaluationIntervalMinutes(rule.evaluationIntervalMinutes || 5);
+      setVerdict(rule.verdict || '');
+      setSeverity(rule.severity || '');
     }
   }, [rule]);
 
@@ -61,6 +65,9 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
       request.timeWindowMinutes = timeWindowMinutes;
       request.evaluationIntervalMinutes = evaluationIntervalMinutes;
     }
+
+    request.verdict = verdict || undefined;
+    request.severity = severity || undefined;
 
     onSave(request);
   };
@@ -135,6 +142,27 @@ export function RuleFormDialog({ rule, onSave, onCancel }: RuleFormDialogProps) 
                 placeholder="Optional description"
                 className="mt-1"
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-slate-700">Verdict</label>
+                <Input
+                  value={verdict}
+                  onChange={(e) => setVerdict(e.target.value)}
+                  placeholder="e.g. BLOCK, REVIEW, FLAG"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700">Severity</label>
+                <Input
+                  value={severity}
+                  onChange={(e) => setSeverity(e.target.value)}
+                  placeholder="e.g. CRITICAL, HIGH, MEDIUM, LOW"
+                  className="mt-1"
+                />
+              </div>
             </div>
 
             <div>

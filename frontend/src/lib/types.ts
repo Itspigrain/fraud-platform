@@ -25,6 +25,7 @@ export interface AlertDocument {
   eventId: string;
   ruleId: string;
   severity: string;
+  verdict: string;
   reason: string;
   detectedAt: string;
 }
@@ -122,6 +123,8 @@ export interface RuleResponse {
   threshold: number | null;
   promptTemplate: string | null;
   evaluationIntervalMinutes: number | null;
+  verdict: string | null;
+  severity: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -138,12 +141,15 @@ export interface RuleRequest {
   threshold?: number;
   promptTemplate?: string;
   evaluationIntervalMinutes?: number;
+  verdict?: string;
+  severity?: string;
 }
 
 export interface AlertSearchParams {
   q?: string;
   ruleId?: string;
   severity?: string;
+  verdict?: string;
   from?: string;
   to?: string;
   page?: number;
