@@ -57,6 +57,10 @@ public class ConnectorDispatcher {
             payload.put("eventTime", event.eventTime().toString());
             payload.put("attributes", event.attributes());
 
+            if (event.exportedFeatures() != null && !event.exportedFeatures().isEmpty()) {
+                payload.put("exportedFeatures", event.exportedFeatures());
+            }
+
             Map<String, Object> ruleMap = new LinkedHashMap<>();
             ruleMap.put("id", rule.getId());
             ruleMap.put("name", rule.getName());

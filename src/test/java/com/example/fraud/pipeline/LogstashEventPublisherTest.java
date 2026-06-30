@@ -36,7 +36,7 @@ class LogstashEventPublisherTest {
     void writeEventAppendsJsonLineToEventsFile() throws Exception {
         var event = new EventDocument("e1", "t1", "PAYMENT",
             Instant.parse("2026-06-16T12:00:00Z"),
-            Map.of("amount", 15000, "customerId", "c1"));
+            Map.of("amount", 15000, "customerId", "c1"), null);
 
         publisher.writeEvent(event);
 
@@ -70,9 +70,9 @@ class LogstashEventPublisherTest {
     @Test
     void multipleWritesAppendToSameFile() throws Exception {
         var event1 = new EventDocument("e1", "t1", "LOGIN",
-            Instant.now(), Map.of());
+            Instant.now(), Map.of(), null);
         var event2 = new EventDocument("e2", "t1", "PAYMENT",
-            Instant.now(), Map.of());
+            Instant.now(), Map.of(), null);
 
         publisher.writeEvent(event1);
         publisher.writeEvent(event2);

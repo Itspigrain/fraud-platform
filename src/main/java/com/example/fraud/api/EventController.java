@@ -6,6 +6,7 @@ import com.example.fraud.event.EventDocument;
 import com.example.fraud.event.EventRequest;
 import com.example.fraud.alert.Alert;
 import com.example.fraud.pipeline.LogstashEventPublisher;
+import com.example.fraud.rule.EvaluationResult;
 import com.example.fraud.rule.RuleEntity;
 import com.example.fraud.rule.RuleService;
 import com.example.fraud.schema.EventSchemaEntity;
@@ -63,12 +64,19 @@ public class EventController {
             tenantId,
             request.eventType(),
             request.eventTime() != null ? request.eventTime() : Instant.now(),
-            cleanAttributes
+            cleanAttributes,
+            null
         );
 
-        publisher.writeEvent(doc);
+        EvaluationResult evalResult = ruleService.evaluateEvent(tenantId, request.eventType(), doc);
+        List<RuleEntity> matchedRules = evalResult.matchedRules();
+        Map<String, Object> exportedFeatures = evalResult.exportedFeatures();
 
-        List<RuleEntity> matchedRules = ruleService.evaluateEvent(tenantId, request.eventType(), doc);
+        EventDocument enrichedDoc = new EventDocument(
+            doc.id(), doc.tenantId(), doc.eventType(), doc.eventTime(),
+            doc.attributes(), exportedFeatures
+        );
+        publisher.writeEvent(enrichedDoc);
 
         List<Map<String, String>> verdicts = matchedRules.stream()
             .map(rule -> Map.of(
@@ -111,16 +119,17 @@ public class EventController {
         publisher.writeAudit(audit);
 
         if (!matchedRules.isEmpty()) {
-            connectorDispatcher.dispatch(tenantId, doc, matchedRules, alerts);
+            connectorDispatcher.dispatch(tenantId, enrichedDoc, matchedRules, alerts);
         }
 
-        log.info("event_ingested tenant={} eventType={} eventId={} verdicts={}",
-            tenantId, request.eventType(), doc.id(), verdicts);
+        log.info("event_ingested tenant={} eventType={} eventId={} verdicts={} features={}",
+            tenantId, request.eventType(), doc.id(), verdicts, exportedFeatures.size());
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("eventId", doc.id());
         response.put("eventType", doc.eventType());
         response.put("verdicts", verdicts);
+        response.put("exportedFeatures", exportedFeatures);
         return response;
     }
 }

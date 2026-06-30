@@ -196,6 +196,28 @@ class RuleValidationServiceTest {
     }
 
     @Test
+    void exportsFieldPrefixSkipsSchemaValidation() {
+        var request = conditionRequest(List.of(
+            new RuleCondition("exports.login_velocity_count", ConditionOperator.GREATER_THAN, "5")
+        ));
+
+        var errors = validator.validate(request, purchaseSchema);
+
+        assertThat(errors).isEmpty();
+    }
+
+    @Test
+    void exportsFieldWithEqualsOperatorSkipsTypeCheck() {
+        var request = conditionRequest(List.of(
+            new RuleCondition("exports.some_rule_matched", ConditionOperator.EQUALS, "true")
+        ));
+
+        var errors = validator.validate(request, purchaseSchema);
+
+        assertThat(errors).isEmpty();
+    }
+
+    @Test
     void integerFieldAcceptsNumericOperators() {
         var request = conditionRequest(List.of(
             new RuleCondition("quantity", ConditionOperator.GREATER_THAN, "10")
