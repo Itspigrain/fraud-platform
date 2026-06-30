@@ -1,6 +1,9 @@
 package com.example.fraud.rule;
 
 import com.example.fraud.config.CacheInvalidationPublisher;
+import com.example.fraud.schema.EventSchemaEntity;
+import com.example.fraud.schema.SchemaService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -9,9 +12,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,7 +27,16 @@ class RuleServiceLlmTest {
     @Mock private RuleEvaluationService evaluationService;
     @Mock private RuleIndexService indexService;
     @Mock private CacheInvalidationPublisher cacheInvalidationPublisher;
+    @Mock private RuleValidationService validationService;
+    @Mock private SchemaService schemaService;
     @InjectMocks private RuleService ruleService;
+
+    @BeforeEach
+    void setUp() {
+        EventSchemaEntity schema = new EventSchemaEntity();
+        schema.setFieldsFromList(List.of());
+        when(schemaService.findSchema(anyString(), anyString())).thenReturn(Optional.of(schema));
+    }
 
     @Test
     void createLlmEvaluatorRuleStoresPromptAndInterval() {
@@ -61,7 +75,7 @@ class RuleServiceLlmTest {
             "purchase", "Test Rule", "desc",
             RuleType.CONDITION, RuleStatus.ACTIVE,
             List.of(new RuleCondition("amount", ConditionOperator.GREATER_THAN, "100")),
-            null, null, null, null, null, null, null
+            null, null, null, null, null, null, null, null, null
         );
 
         when(ruleRepository.save(any())).thenAnswer(inv -> {

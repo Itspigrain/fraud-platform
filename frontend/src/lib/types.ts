@@ -150,6 +150,11 @@ export interface RuleRequest {
   dependencyCondition?: DependencyCondition;
 }
 
+export interface ValidationError {
+  field: string;
+  message: string;
+}
+
 export interface AlertSearchParams {
   q?: string;
   ruleId?: string;

@@ -2,6 +2,7 @@ package com.example.fraud.rule;
 
 import com.example.fraud.config.CacheInvalidationPublisher;
 import com.example.fraud.event.EventDocument;
+import com.example.fraud.schema.SchemaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -26,10 +27,22 @@ public class RuleService {
     private final RuleEvaluationService evaluationService;
     private final RuleIndexService indexService;
     private final CacheInvalidationPublisher cacheInvalidationPublisher;
+    private final RuleValidationService validationService;
+    private final SchemaService schemaService;
 
     private final Map<String, List<RuleEntity>> activeRulesCache = new ConcurrentHashMap<>();
 
+    public List<RuleValidationService.ValidationError> validateRule(String tenantId, RuleRequest request) {
+        var schema = schemaService.findSchema(tenantId, request.eventType());
+        if (schema.isEmpty()) {
+            return List.of(new RuleValidationService.ValidationError(
+                "eventType", "No schema registered for event type '" + request.eventType() + "'"));
+        }
+        return validationService.validate(request, schema.get().getParsedFields());
+    }
+
     public RuleResponse create(String tenantId, RuleRequest request) {
+        rejectIfInvalid(tenantId, request);
         if (request.dependsOn() != null && !request.dependsOn().isEmpty()) {
             validateDependencies(tenantId, request.eventType(), null, request.dependsOn());
         }
@@ -81,6 +94,7 @@ public class RuleService {
     }
 
     public RuleResponse update(String tenantId, Long ruleId, RuleRequest request) {
+        rejectIfInvalid(tenantId, request);
         RuleEntity entity = findByIdAndTenant(tenantId, ruleId);
 
         String effectiveEventType = request.eventType() != null ? request.eventType() : entity.getEventType();
@@ -190,6 +204,17 @@ public class RuleService {
                 ruleRepository.findById(depId).ifPresent(dep ->
                     queue.addAll(dep.getParsedDependsOn()));
             }
+        }
+    }
+
+    private void rejectIfInvalid(String tenantId, RuleRequest request) {
+        List<RuleValidationService.ValidationError> errors = validateRule(tenantId, request);
+        if (!errors.isEmpty()) {
+            String message = errors.stream()
+                .map(e -> e.field() + ": " + e.message())
+                .reduce((a, b) -> a + "; " + b)
+                .orElse("Validation failed");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
         }
     }
 
