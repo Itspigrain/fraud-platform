@@ -1,5 +1,6 @@
 package com.example.fraud.schema;
 
+import com.example.fraud.config.CacheInvalidationPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,12 +22,13 @@ class SchemaServiceTest {
     @Mock private EventSchemaRepository repository;
     @Mock private SchemaValidationService validationService;
     @Mock private SchemaIndexService indexService;
+    @Mock private CacheInvalidationPublisher cacheInvalidationPublisher;
 
     private SchemaService service;
 
     @BeforeEach
     void setUp() {
-        service = new SchemaService(repository, validationService, indexService);
+        service = new SchemaService(repository, validationService, indexService, cacheInvalidationPublisher);
     }
 
     @Test

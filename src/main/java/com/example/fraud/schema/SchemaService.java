@@ -1,5 +1,6 @@
 package com.example.fraud.schema;
 
+import com.example.fraud.config.CacheInvalidationPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ public class SchemaService {
     private final EventSchemaRepository repository;
     private final SchemaValidationService validationService;
     private final SchemaIndexService indexService;
+    private final CacheInvalidationPublisher cacheInvalidationPublisher;
 
     private final Map<String, EventSchemaEntity> schemaCache = new ConcurrentHashMap<>();
 
@@ -39,7 +41,8 @@ public class SchemaService {
 
         entity = repository.save(entity);
         indexService.ensureTenantIndex(tenantId, request.fields());
-        invalidateCache(tenantId, request.eventType());
+        invalidateSchemaCache(tenantId, request.eventType());
+        cacheInvalidationPublisher.publishSchemaInvalidation(tenantId, request.eventType());
 
         log.info("Created schema tenant={} eventType={}", tenantId, request.eventType());
         return SchemaResponse.from(entity);
@@ -68,7 +71,8 @@ public class SchemaService {
         }
 
         entity = repository.save(entity);
-        invalidateCache(tenantId, eventType);
+        invalidateSchemaCache(tenantId, eventType);
+        cacheInvalidationPublisher.publishSchemaInvalidation(tenantId, eventType);
 
         log.info("Updated schema tenant={} eventType={}", tenantId, eventType);
         return SchemaResponse.from(entity);
@@ -77,7 +81,8 @@ public class SchemaService {
     public void delete(String tenantId, String eventType) {
         EventSchemaEntity entity = findEntityOrThrow(tenantId, eventType);
         repository.delete(entity);
-        invalidateCache(tenantId, eventType);
+        invalidateSchemaCache(tenantId, eventType);
+        cacheInvalidationPublisher.publishSchemaInvalidation(tenantId, eventType);
         log.info("Deleted schema tenant={} eventType={}", tenantId, eventType);
     }
 
@@ -95,7 +100,7 @@ public class SchemaService {
         return found;
     }
 
-    private void invalidateCache(String tenantId, String eventType) {
+    public void invalidateSchemaCache(String tenantId, String eventType) {
         schemaCache.remove(tenantId + ":" + eventType);
     }
 
